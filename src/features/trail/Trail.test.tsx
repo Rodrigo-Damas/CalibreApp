@@ -1,0 +1,2 @@
+import { render,screen } from "@testing-library/react";import { describe,it,expect } from "vitest";import { MockStoreProvider } from "@/mocks/store";import { Trail } from "./Trail";
+describe("Trail",()=>{it("identifica etapa atual e bloqueada",()=>{render(<MockStoreProvider scenario="empty"><Trail/></MockStoreProvider>);expect(screen.getByRole("button",{name:"Treino 1, disponível"})).toBeEnabled();expect(screen.getByRole("button",{name:"Treino 2, bloqueado"})).toBeDisabled()})});
