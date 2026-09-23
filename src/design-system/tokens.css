@@ -1,0 +1,12 @@
+:root {
+  --color-brand-50:#f1fce8; --color-brand-100:#e0f8cc; --color-brand-500:#58b928; --color-brand-600:#469d1c; --color-brand-700:#347d13;
+  --color-ink:#202b36; --color-muted:#687580; --color-subtle:#8b969e; --color-line:#dfe5e8; --color-surface:#fff; --color-canvas:#f6f8f4;
+  --color-blue:#3d76e8; --color-orange:#f59e3d; --color-yellow:#f5bf3e; --color-danger:#d64545;
+  --font-sans:"Nunito Sans","Avenir Next",ui-rounded,system-ui,sans-serif;
+  --text-xs:.75rem; --text-sm:.875rem; --text-md:1rem; --text-lg:1.125rem; --text-xl:1.5rem; --text-2xl:2rem; --text-hero:2.75rem;
+  --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem; --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem; --space-10:2.5rem;
+  --radius-sm:.625rem; --radius-md:1rem; --radius-lg:1.375rem; --radius-pill:999px;
+  --shadow-sm:0 1px 2px rgb(24 42 28/.06); --shadow-md:0 10px 30px rgb(24 42 28/.08); --shadow-button:0 5px 0 var(--color-brand-700);
+  --transition-fast:140ms ease; --header-height:4.5rem; --nav-height:5rem; --content-max:74rem;
+  --breakpoint-mobile:47.99rem; --breakpoint-tablet:48rem; --breakpoint-desktop:64rem;
+}
