@@ -1,38 +1,48 @@
 export type TrackId = "push" | "pull" | "legs" | "core" | "cardio";
 export type Effort = "Muito fáceis" | "Fáceis" | "Moderadas" | "Difíceis" | "Muito difíceis" | "Não completei";
+export type SuggestionResult = "Fiz" | "Em parte" | "Não fiz";
+export type JourneyNodeState = "history" | "record" | "next" | "goal";
 
 export type Practice = {
-  id: string; track: TrackId; name: string; dose: number; unit: "reps" | "seg";
-  status: "dominado" | "atual" | "próximo"; suggestion: string;
+  id: string;
+  track: TrackId;
+  capabilities: TrackId[];
+  name: string;
+  volume: number;
+  unit: "repetições" | "segundos";
+  blocks: number;
+  suggestion?: { text: string; volume: number };
 };
 
-export const tracks = [
-  {id:"push",name:"Empurrar",icon:"↗",color:"#58b928",reference:"Flexão no solo",capacity:"10 flexões/min",checkpoint:"Máximo de flexões válidas"},
-  {id:"pull",name:"Puxar",icon:"↓",color:"#5478e7",reference:"Barra fixa",capacity:"3 barras/min",checkpoint:"Vamos ver sua primeira série?"},
-  {id:"legs",name:"Pernas",icon:"◇",color:"#ef9942",reference:"Agachamento profundo",capacity:"15 agachamentos/min",checkpoint:"Amplitude e controle"},
-  {id:"core",name:"Core",icon:"✦",color:"#9b63d8",reference:"Crunch abdominal",capacity:"12 crunches/min",checkpoint:"Isometria de hollow"},
-  {id:"cardio",name:"Cardio",icon:"≈",color:"#e4586f",reference:"Saltos de corda",capacity:"60 saltos/min",checkpoint:"Ritmo por 5 minutos"},
-] as const;
+export type Track = {
+  id: TrackId;
+  name: string;
+  icon: string;
+  color: string;
+  exercise: string;
+  unit: "repetições" | "segundos";
+  history: number[];
+  personalBest: number;
+  recommendation: number;
+  accumulated: number;
+  weekly: number;
+  suggestion?: { text: string; volume: number };
+  suggestedWith: TrackId[];
+};
 
-export const practices: Practice[] = [
-  {id:"push-incline",track:"push",name:"Flexão inclinada",dose:12,unit:"reps",status:"dominado",suggestion:"Use uma base um pouco mais baixa nas primeiras repetições."},
-  {id:"push-floor",track:"push",name:"Flexão no solo",dose:10,unit:"reps",status:"atual",suggestion:"Hoje está confortável. Experimente maior amplitude na primeira série."},
-  {id:"push-diamond",track:"push",name:"Flexão diamante",dose:4,unit:"reps",status:"próximo",suggestion:"Experimente as primeiras repetições em flexão diamante."},
-  {id:"pull-row",track:"pull",name:"Remada australiana",dose:8,unit:"reps",status:"dominado",suggestion:"Pause um segundo com o peito próximo à barra."},
-  {id:"pull-up",track:"pull",name:"Barra fixa",dose:3,unit:"reps",status:"atual",suggestion:"Experimente sua primeira barra em L-sit antes do EMOM."},
-  {id:"pull-negative",track:"pull",name:"Negativa controlada",dose:4,unit:"reps",status:"próximo",suggestion:"Desça contando cinco segundos."},
-  {id:"squat",track:"legs",name:"Agachamento profundo",dose:15,unit:"reps",status:"atual",suggestion:"Faça as primeiras repetições com pausa no fundo."},
-  {id:"pistol-box",track:"legs",name:"Pistol no banco",dose:5,unit:"reps",status:"próximo",suggestion:"Teste uma repetição assistida de cada lado."},
-  {id:"crunch",track:"core",name:"Crunch controlado",dose:12,unit:"reps",status:"atual",suggestion:"Segure dois segundos no topo da primeira repetição."},
-  {id:"hollow",track:"core",name:"Hollow hold",dose:25,unit:"seg",status:"próximo",suggestion:"Mantenha a lombar apoiada; dobre os joelhos se precisar."},
-  {id:"rope",track:"cardio",name:"Saltos de corda",dose:60,unit:"reps",status:"atual",suggestion:"Experimente alternar os pés nos primeiros 15 saltos."},
-  {id:"fast-feet",track:"cardio",name:"Pés rápidos",dose:40,unit:"seg",status:"próximo",suggestion:"Comece leve e encontre um ritmo sustentável."},
+export const tracks: Track[] = [
+  {id:"push",name:"Empurrar",icon:"↗",color:"var(--track-push)",exercise:"Flexão de braço",unit:"repetições",history:[32,42,50,58,64,72,80],personalBest:80,recommendation:70,accumulated:1840,weekly:198,suggestion:{text:"Realize as primeiras 10 como flexão diamante.",volume:10},suggestedWith:["pull","core"]},
+  {id:"pull",name:"Puxar",icon:"↓",color:"var(--track-pull)",exercise:"Remada australiana",unit:"repetições",history:[18,24,28,34],personalBest:34,recommendation:36,accumulated:920,weekly:96,suggestion:{text:"Pause um segundo junto à barra nas primeiras 6.",volume:6},suggestedWith:["push"]},
+  {id:"legs",name:"Pernas",icon:"◇",color:"var(--track-legs)",exercise:"Agachamento",unit:"repetições",history:[40,55,66,74,82,90],personalBest:90,recommendation:92,accumulated:1560,weekly:264,suggestion:{text:"Faça as primeiras 12 com pausa no fundo.",volume:12},suggestedWith:["core","cardio"]},
+  {id:"core",name:"Core",icon:"✦",color:"var(--track-core)",exercise:"Crunch controlado",unit:"repetições",history:[20,28,34,40],personalBest:40,recommendation:42,accumulated:780,weekly:112,suggestion:{text:"Segure dois segundos no topo das primeiras 8.",volume:8},suggestedWith:["legs","push"]},
+  {id:"cardio",name:"Cardio",icon:"≈",color:"var(--track-cardio)",exercise:"Polichinelo",unit:"repetições",history:[20,30,38],personalBest:38,recommendation:40,accumulated:460,weekly:80,suggestion:{text:"Alterne a base nos primeiros 10 saltos.",volume:10},suggestedWith:["legs"]},
 ];
 
-export const evolution = {
-  push:[{month:"Jan",value:5,effort:"Difícil"},{month:"Mar",value:7,effort:"Moderado"},{month:"Mai",value:9,effort:"Moderado"},{month:"Jul",value:10,effort:"Fácil"}],
-  pull:[{month:"Jan",value:1,effort:"Muito difícil"},{month:"Mar",value:2,effort:"Difícil"},{month:"Mai",value:2,effort:"Moderado"},{month:"Jul",value:3,effort:"Moderado"}],
-  legs:[{month:"Jan",value:10,effort:"Difícil"},{month:"Mar",value:12,effort:"Moderado"},{month:"Mai",value:14,effort:"Moderado"},{month:"Jul",value:15,effort:"Fácil"}],
-  core:[{month:"Jan",value:7,effort:"Difícil"},{month:"Mar",value:9,effort:"Moderado"},{month:"Mai",value:11,effort:"Moderado"},{month:"Jul",value:12,effort:"Fácil"}],
-  cardio:[{month:"Jan",value:35,effort:"Difícil"},{month:"Mar",value:45,effort:"Moderado"},{month:"Mai",value:55,effort:"Moderado"},{month:"Jul",value:60,effort:"Fácil"}],
-};
+export function prescribedPractice(trackId: TrackId, occurrence = 0): Practice {
+  const track = tracks.find(({id}) => id === trackId)!;
+  return {id:`${trackId}-${occurrence}`,track:trackId,capabilities:[trackId],name:track.exercise,volume:track.recommendation,unit:track.unit,blocks:4,suggestion:track.suggestion};
+}
+
+export const practices = tracks.map(({id}) => prescribedPractice(id));
+
+export const evolution = Object.fromEntries(tracks.map(track => [track.id, track.history.slice(-4).map((value,index) => ({month:["Abr","Mai","Jun","Jul"][index],value,effort:"Moderado"}))])) as Record<TrackId,{month:string;value:number;effort:string}[]>;

@@ -35,3 +35,9 @@ Percorra **Jornada** e **Evolução**, escolha práticas em uma ou mais trilhas 
 Importe o repositório no Vercel ou use a CLI (`vercel`). O framework e o comando de build são detectados por `vercel.json`. Cada pull request conectado ao Vercel gera um preview. Não são necessárias variáveis de ambiente, credenciais ou identificadores de projeto; não versione a pasta `.vercel`.
 
 Consulte `docs/UI_SPEC.md` e `docs/RESPONSIVE_SPEC.md` para decisões de produto e layout.
+
+## Jornada adaptativa por volume
+
+A Home compara simultaneamente as cinco capacidades permanentes por meio de históricos de esferas, recordes e uma única recomendação futura por trilha. Toque diretamente na próxima esfera para uma prática simples ou use **INICIAR TREINO** para combinar capacidades por toque ou arraste. Participações repetidas são preservadas e intercaladas na prescrição.
+
+O fluxo seguinte confirma exercício básico, volume e ordem, oferece uma sugestão técnica opcional, orienta os blocos concluídos e coleta resultado da sugestão e esforço. A conclusão atualiza em memória histórico, volume semanal/acumulado, recomendação e recorde condicional. Consulte `docs/UI_SPEC.md` para a semântica completa e `docs/RESPONSIVE_SPEC.md` para a matriz de 320 px, mobile, tablet e desktop.
