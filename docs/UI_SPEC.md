@@ -1,36 +1,23 @@
 # Especificação de interface — Calibre
 
-## Fonte da análise
+## Jornada histórica
 
-A referência visual e funcional é `CalibreCompleto.swift`, preservada sem alterações. O protótipo SwiftUI define uma experiência de treino gamificada, clara e arredondada, com verde como cor de ação, fundo quase branco e feedbacks em amarelo, laranja e azul.
+A Home apresenta simultaneamente **Empurrar, Puxar, Pernas, Core e Cardio**. Cada caminho é uma sequência curta: esferas preenchidas e conexões sólidas são práticas realizadas; a esfera com troféu é o recorde; a conexão pontilhada leva à única esfera vazia, a recomendação atual. O comprimento de cada histórico torna o desenvolvimento relativo reconhecível antes dos números. Volume semanal e acumulado substituem XP e tempo como sinais principais.
 
-## Princípios
+As cores são identidades semânticas (`--track-push`, `--track-pull`, `--track-legs`, `--track-core` e `--track-cardio`). Uma prática possui uma lista de capacidades, permitindo que uma esfera híbrida use futuramente gradiente ou divisão de cores. O estado opcional `goal` existe no modelo, mas não cria controles incompletos.
 
-1. **Uma ação por vez:** a trilha destaca apenas o próximo treino disponível.
-2. **Progresso legível:** XP, sequência, nível e conclusão têm texto além de cor.
-3. **Registro sem julgamento:** descanso não penaliza e nenhum dado é persistido.
-4. **Mapa responsável:** o mapa muscular é ilustrativo, nunca uma medição clínica.
+## Composição por conexão
 
-## Arquitetura
+`INICIAR TREINO` abre a montagem. O usuário pode tocar nas recomendações ou arrastar uma até outra; ambas as entradas produzem a mesma seleção acessível. Destinos sugeridos recebem halo e o texto “Combinação sugerida”. A ligação pontilhada comunica sugestão, enquanto seleção e borda sólida comunicam confirmação. A teia só ganha ênfase nessa etapa.
 
-- **Trilha:** unidades, etapas concluídas, etapa atual e etapas bloqueadas.
-- **Exercícios:** busca local por nome ou grupo e catálogo determinístico.
-- **Jornada:** XP, nível, conquistas e histórico da sessão corrente.
-- **Missão:** desafios diário/semanal e calendário de consistência.
-- **Treino:** seleção, contador de séries, conclusão, resumo e mapa muscular.
+Os controles `+` e `−` repetem uma capacidade e mostram `2×`, `3×` sem duplicar a trilha. Cada ocorrência permanece na fila. A prescrição intercala capacidades quando possível e determina exercício básico, volume e ordem; combinações não pontuam nesta versão.
 
-## Linguagem visual
+## Prática e feedback
 
-- Superfícies brancas sobre canvas verde-neutro; cartões com borda sutil.
-- Tipografia arredondada, títulos pesados e etiquetas em caixa alta.
-- Cantos de 10–22 px, espaços na escala de 4 px e elevação discreta.
-- Verde para seleção/ação; laranja/amarelo para sequência e conquistas; azul para XP.
-- Estados: foco com halo, hover com deslocamento sutil, pressionado com redução de elevação, desabilitado com opacidade de 48%.
+Antes de cada prática, exercício e volume continuam visíveis enquanto a sugestão técnica aparece como camada opcional. Há somente “Aceitar sugestão” e “Manter prática padrão”. Ao aceitar, registra-se `Fiz`, `Em parte` ou `Não fiz` antes da avaliação principal de seis esforços.
 
-## Comportamentos
+A execução é orientada por volume: capacidade, exercício, prescrito, concluído, blocos e próxima prática. A capacidade atual colore ambiente e progresso sem substituir os rótulos textuais. O motor em memória pode elevar, manter ou reduzir a recomendação. A conclusão preenche as próximas esferas, solidifica conexões, soma volumes e só altera o recorde quando ele é superado.
 
-O estado reside no provider React e reinicia ao recarregar. Concluir treino adiciona um registro em memória, avança uma etapa e mostra resumo. Não há autenticação, API, banco, câmera, Vision, persistência, contagem automática nem regra real de XP.
+## Estado e acessibilidade
 
-## Acessibilidade
-
-Controles possuem nome acessível, ícones não são a única forma de comunicar estado, foco é visível, áreas de toque são amplas, contraste é preservado e `prefers-reduced-motion` é respeitado.
+`MockStoreProvider` mantém tudo em memória; recarregar restaura os mocks. Não há autenticação, banco ou algoritmo definitivo. Controles têm nomes acessíveis, `aria-pressed`, foco visível e alvos mínimos de 44 px. O toque oferece alternativa integral ao arraste, e `prefers-reduced-motion` desativa a celebração animada.
