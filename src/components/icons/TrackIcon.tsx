@@ -1,12 +1,8 @@
-import { PersonStanding } from "lucide-react";
-import type { TrackId } from "@/mocks/data";
-
-export function TrackIcon({track,className}:{track:TrackId;className?:string}){
-  if(track==="core")return <PersonStanding className={className} aria-hidden="true"/>;
-  return <svg className={className} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {track==="push"&&<><circle cx="23" cy="10" r="3"/><path d="M5 24h22M9 21l4-7 9 4 4 6M13 14l-5 4"/></>}
-    {track==="pull"&&<><path d="M5 5h22M8 5v3M24 5v3"/><circle cx="16" cy="12" r="3"/><path d="M10 8l3 2m9-2-3 2m-3 5v11m0-7-6 6m6-6 6 6"/></>}
-    {track==="legs"&&<><circle cx="16" cy="6" r="3"/><path d="M16 9v8m0-4-7 3m7-3 7 3m-7 1-6 9m6-9 6 9M6 16h20"/></>}
-    {track==="cardio"&&<><path d="M9 8c-5 3-5 15 0 18m14-18c5 3 5 15 0 18M9 8l4 11m10-11-4 11"/><circle cx="16" cy="8" r="3"/><path d="M13 12l3 6 3-6m-6 14 3-8 3 8"/></>}
-  </svg>
-}
+import type {TrackId} from "@/mocks/data";
+const names:Record<TrackId,string>={push:"Flexão",pull:"Barra fixa",legs:"Agachamento",core:"Elevação de pernas"};
+export function TrackIcon({track,className,decorative=false}:{track:TrackId;className?:string;decorative?:boolean}){return <svg className={className} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" role={decorative?undefined:"img"} aria-hidden={decorative||undefined} aria-label={decorative?undefined:names[track]}>
+ {track==="push"&&<><circle cx="24" cy="11" r="2.5"/><path d="M4 24h24M8 21l6-7 9 4 3 6M14 14l-6 4"/></>}
+ {track==="pull"&&<><path d="M5 5h22M9 5v4m14-4v4M9 9l5 3m9-3-5 3"/><circle cx="16" cy="14" r="2.5"/><path d="M16 17v9m0-5-5 5m5-5 5 5"/></>}
+ {track==="legs"&&<><circle cx="16" cy="6" r="2.5"/><path d="M16 9v9m0-5-7 3m7-3 7 3m-7 5-5 6m5-6 5 6M7 18h18"/></>}
+ {track==="core"&&<><circle cx="25" cy="20" r="2.5"/><path d="M4 25h24M8 23l7-8 8 5m-8-5-3-7m3 7 1-7"/></>}
+ </svg>}
