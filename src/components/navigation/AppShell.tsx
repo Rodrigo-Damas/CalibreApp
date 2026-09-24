@@ -1,6 +1,9 @@
 "use client";
-import { Activity, Flame } from "lucide-react";
+import { Activity, ChartNoAxesColumnIncreasing, Flame, Map, UserRound } from "lucide-react";
+import { useState } from "react";
 import { useMockStore } from "@/mocks/store";
 import { Trail } from "@/features/trail/Trail";
-
-export function AppShell(){const store=useMockStore();return <div className="app-shell"><header className="topbar"><div className="brand"><span className="brand-mark"><Activity/></span><span>CALIBRE</span></div><span className="streak"><Flame/> {store.streak} dias</span></header><main><Trail/></main></div>}
+import { Evolution } from "@/features/evolution/Evolution";
+type View="journey"|"evolution"|"profile";
+const items=[{id:"journey" as const,label:"Jornada",Icon:Map},{id:"evolution" as const,label:"Evolução",Icon:ChartNoAxesColumnIncreasing},{id:"profile" as const,label:"Perfil",Icon:UserRound}];
+export function AppShell(){const store=useMockStore(),[view,setView]=useState<View>("journey");return <div className="app-shell"><header className="topbar"><div className="brand"><span className="brand-mark"><Activity/></span><div><strong>CALIBRE</strong><small>CALISTENIA</small></div></div><div className="header-actions"><span className="streak"><Flame/> <b>{store.streak}</b><small> dias</small></span><button aria-label="Abrir perfil" onClick={()=>setView("profile")}><UserRound/></button></div></header><main>{view==="journey"?<Trail/>:view==="evolution"?<Evolution/>:<section className="page profile-page"><span className="profile-avatar"><UserRound/></span><p className="eyebrow">SEU PERFIL</p><h1>Atleta Calibre</h1><p>Som, vibração e preferências do treino ficam salvos neste dispositivo.</p><div className="metric-cards"><article><span>Sequência</span><strong>{store.streak}</strong><small>dias</small></article><article><span>Práticas</span><strong>{store.completed}</strong><small>concluídas</small></article></div></section>}</main><nav className="bottom-nav" aria-label="Navegação principal">{items.map(({id,label,Icon})=><button key={id} className={view===id?"active":""} aria-current={view===id?"page":undefined} onClick={()=>setView(id)}><Icon/><span>{label}</span></button>)}</nav></div>}
