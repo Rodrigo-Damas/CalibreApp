@@ -1,0 +1,3 @@
+import type {CSSProperties} from "react";import {TrackIcon} from "@/components/icons/TrackIcon";import {tracks,type TrackId} from "@/mocks/data";
+export type SequenceNode={id:string;track:TrackId;ordinal:number;reps:number};
+export function WorkoutSequence({nodes,mode}:{nodes:SequenceNode[];mode:"blocks"|"circuit"}){return <div className={`workout-sequence ${nodes.length>24?"dense":""}`} data-mode={mode} aria-label={`Sequência em ${mode==="blocks"?"Blocos":"Circuito"}`}>{nodes.map(node=>{const track=tracks.find(t=>t.id===node.track)!;return <div className="sequence-node" style={{"--track":track.color} as CSSProperties} key={node.id} data-node-id={node.id}><TrackIcon track={node.track} decorative/><strong>{node.reps}</strong><span>repetições</span></div>})}</div>}
