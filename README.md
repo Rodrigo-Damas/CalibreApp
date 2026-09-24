@@ -1,6 +1,6 @@
 # Calibre Web
 
-Aplicação Next.js que traduz o protótipo SwiftUI preservado em `CalibreCompleto.swift` para uma experiência web responsiva. Todos os dados e estados são simulados e ficam apenas na memória.
+Protótipo responsivo do motor de progressão em calistenia do Calibre. A experiência permite navegar por cinco trilhas independentes, montar uma sessão de até cinco práticas, realizar o fluxo de aquecimento e EMOM, registrar a percepção de esforço e visualizar a próxima recomendação adaptada. Todos os dados e estados são simulados e ficam apenas na memória.
 
 ## Executar
 
@@ -28,7 +28,7 @@ Abra as ferramentas de desenvolvimento do navegador e teste, no mínimo:
 - tablet: 768 × 1024 (confira o drawer lateral);
 - desktop: 1440 × 900 (confira a sidebar persistente).
 
-Percorra as quatro áreas, inicie o treino atual, selecione exercícios, altere séries e conclua para conferir resumo e mapa muscular. O refresh deve restaurar os mocks iniciais.
+Percorra **Jornada** e **Evolução**, escolha práticas em uma ou mais trilhas e conclua o ciclo completo. O acesso ao onboarding demonstrativo fica disponível no perfil da navegação lateral. O refresh restaura os mocks iniciais.
 
 ## Preview no Vercel
 
