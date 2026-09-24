@@ -1,27 +1,14 @@
-import { cleanup,fireEvent,render,screen } from "@testing-library/react";
-import { afterEach,describe,it,expect } from "vitest";
-import { prescribedPractice, type Effort } from "@/mocks/data";
-import { adaptedVolume, MockStoreProvider } from "@/mocks/store";
-import { alternatePractices } from "./WorkoutFlow";
+import { act,cleanup,fireEvent,render,screen,within } from "@testing-library/react";
+import { afterEach,describe,it,expect,vi } from "vitest";
+import { MockStoreProvider } from "@/mocks/store";
 import { Trail } from "@/features/trail/Trail";
-afterEach(cleanup);
 
-describe("prescrição e adaptação",()=>{
-  it("alterna ocorrências e escolhe automaticamente exercícios básicos",()=>{
-    const queue=alternatePractices([prescribedPractice("push",0),prescribedPractice("push",1),prescribedPractice("pull",0),prescribedPractice("pull",1)]);
-    expect(queue.map(item=>item.track)).toEqual(["push","pull","push","pull"]);
-    expect(queue.map(item=>item.name)).toEqual(["Flexão de braço","Remada australiana","Flexão de braço","Remada australiana"]);
-  });
-  it("aceita todas as seis respostas de esforço e pode subir, manter ou reduzir",()=>{
-    const efforts:Effort[]=["Muito fáceis","Fáceis","Moderadas","Difíceis","Muito difíceis","Não completei"];
-    expect(efforts.map(effort=>adaptedVolume(100,effort))).toEqual([115,110,105,100,90,80]);
-    expect(adaptedVolume(100,"Moderadas","Em parte")).toBe(103);
-    expect(adaptedVolume(100,"Moderadas","Não fiz")).toBe(100);
-  });
-  it("oferece aceitar e recusar a sugestão separada da prática",()=>{
-    render(<MockStoreProvider><Trail/></MockStoreProvider>);fireEvent.click(screen.getByRole("button",{name:/Iniciar Empurrar/}));fireEvent.click(screen.getByRole("button",{name:/COMEÇAR SESSÃO/}));
-    expect(screen.getByText(/primeiras 10 como flexão diamante/i)).toBeInTheDocument();
-    expect(screen.getByRole("button",{name:"ACEITAR SUGESTÃO"})).toBeInTheDocument();
-    expect(screen.getByRole("button",{name:"MANTER PRÁTICA PADRÃO"})).toBeInTheDocument();
-  });
+afterEach(()=>{cleanup();vi.useRealTimers()});
+function openTwo(){render(<MockStoreProvider><Trail/></MockStoreProvider>);fireEvent.click(screen.getByRole("button",{name:/Selecionar sugestão de Empurrar/}));fireEvent.click(screen.getByRole("button",{name:/Selecionar sugestão de Puxar/}));fireEvent.click(screen.getByRole("button",{name:"INICIAR"}))}
+function completeSet(last=false){for(let i=0;i<3;i++)act(()=>vi.advanceTimersByTime(1000));fireEvent.click(screen.getByRole("button",{name:"TERMINEI"}));if(!last)fireEvent.click(screen.getByRole("button",{name:"PRÓXIMA SÉRIE"}))}
+
+describe("WorkoutFlow",()=>{
+  it("calcula cinco séries, destaques, volumes e duração",()=>{openTwo();expect(screen.getAllByText(/5 séries/)).toHaveLength(2);const cards=document.querySelectorAll(".practice-card");expect(within(cards[0] as HTMLElement).getByText("14")).toHaveClass("reps-number");expect(within(cards[1] as HTMLElement).getByText("7")).toHaveClass("reps-number");expect(within(cards[0] as HTMLElement).getByText("70")).toBeInTheDocument();expect(within(cards[1] as HTMLElement).getByText("35")).toBeInTheDocument();expect(screen.getByText("105")).toBeInTheDocument();expect(screen.getAllByText("10 min").length).toBeGreaterThanOrEqual(1)});
+  it("inverte e preserva a ordem escolhida",()=>{openTwo();fireEvent.click(screen.getByRole("button",{name:"Inverter ordem das práticas"}));const cards=document.querySelectorAll(".practice-card");expect(within(cards[0] as HTMLElement).getByRole("heading",{name:"Barra fixa"})).toBeInTheDocument();expect(within(cards[1] as HTMLElement).getByRole("heading",{name:"Flexão de braço no solo"})).toBeInTheDocument()});
+  it("faz o aquecimento e executa cinco séries completas antes da segunda prática",()=>{vi.useFakeTimers();openTwo();fireEvent.click(screen.getByRole("button",{name:"AQUECER"}));expect(screen.getByText("Flexão inclinada")).toBeInTheDocument();fireEvent.click(screen.getByRole("button",{name:"COMEÇAR AQUECIMENTO"}));expect(screen.getByRole("heading",{name:"Flexão inclinada"})).toBeInTheDocument();for(let i=0;i<4;i++)fireEvent.click(screen.getByRole("button",{name:i===3?"CONCLUIR":"CONTINUAR"}));expect(screen.getByRole("heading",{name:"Treino pronto"})).toBeInTheDocument();fireEvent.click(screen.getByRole("button",{name:/INICIAR FLEXÃO/}));for(let i=1;i<=5;i++){expect(screen.getByText(`SÉRIE ${i}/5`)).toBeInTheDocument();completeSet(i===5)}expect(screen.getByText("PUXAR · 2 DE 2")).toBeInTheDocument();expect(screen.getByRole("heading",{name:"Barra fixa"})).toBeInTheDocument();expect(screen.getByText("SÉRIE 1/5")).toBeInTheDocument()});
 });
