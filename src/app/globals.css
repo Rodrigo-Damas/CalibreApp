@@ -560,7 +560,17 @@ button {
 }
 @media (min-width: 700px) {
   body { background:#eef0ef; }
-  .trail-page { margin:1.25rem auto 7rem; overflow:hidden; border:1px solid var(--color-line); border-radius:1.25rem; background:var(--color-canvas); box-shadow:0 5px 24px rgb(33 42 47/.06); }
+  .trail-page {
+    margin:1.25rem auto 7rem;
+    /* `hidden` makes this the sticky containing block and lets the column
+       headings scroll away with the journey on desktop. `clip` keeps the
+       rounded card crop without creating a scroll container. */
+    overflow:clip;
+    border:1px solid var(--color-line);
+    border-radius:1.25rem;
+    background:var(--color-canvas);
+    box-shadow:0 5px 24px rgb(33 42 47/.06);
+  }
   .bottom-nav { left:50%; right:auto; width:min(100%,58rem); transform:translateX(-50%); border-inline:1px solid var(--color-line); border-radius:1rem 1rem 0 0; overflow:hidden; }
   .track-selector {
     grid-template-columns: repeat(4, 1fr);
