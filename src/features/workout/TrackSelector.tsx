@@ -1,1 +1,17 @@
-import type{CSSProperties}from"react";import{tracks,type TrackId}from"@/mocks/data";export function TrackSelector({selected,onToggle,repeated=[]}:{selected:TrackId[];onToggle:(id:TrackId)=>void;repeated?:TrackId[]}){return <div className="track-selector" aria-label="Escolha de trilhas">{tracks.map(t=><button key={t.id} style={{"--track":t.color}as CSSProperties} aria-pressed={selected.includes(t.id)} onClick={()=>onToggle(t.id)}><i aria-hidden="true"/><strong>{t.name}</strong><small>{t.exercise}</small>{repeated.includes(t.id)&&<span>Já treinada hoje</span>}</button>)}</div>}
+import type { CSSProperties } from "react";
+import { Check } from "lucide-react";
+import { TrackIcon } from "@/components/icons/TrackIcon";
+import { tracks, type TrackId } from "@/mocks/data";
+
+export function TrackSelector({ selected, onToggle, repeated = [] }: { selected: TrackId[]; onToggle: (id: TrackId) => void; repeated?: TrackId[] }) {
+  return <div className="track-selector" aria-label="Escolha de trilhas">{tracks.map((track) => {
+    const active = selected.includes(track.id);
+    return <button key={track.id} style={{ "--track": track.color } as CSSProperties} aria-pressed={active} onClick={() => onToggle(track.id)}>
+      <span className="track-selector__check" aria-hidden="true">{active ? <Check /> : "+"}</span>
+      <TrackIcon track={track.id} decorative />
+      <strong>{track.name}</strong>
+      <small>{track.exercise}</small>
+      {repeated.includes(track.id) && <span className="track-selector__repeat">Treinada hoje</span>}
+    </button>;
+  })}</div>;
+}

@@ -740,3 +740,75 @@ button { min-height: 44px; }
 [data-reduced-motion="true"] *,
 [data-reduced-motion="true"] *::before,
 [data-reduced-motion="true"] *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
+
+/* Illustrated journey — the same movement language now carries through planning. */
+.track-illustration { display:block; overflow:visible; color:var(--color-ink); }
+.track-illustration__halo { fill:color-mix(in srgb,var(--track) 13%,white); stroke:none; }
+.track-illustration__figure { stroke:var(--color-ink); stroke-width:5; }
+.track-illustration__figure circle { fill:var(--color-ink); }
+.track-illustration__figure .track-illustration__accent { stroke:var(--track); stroke-width:4; }
+.track-illustration__ground { fill:none; stroke:color-mix(in srgb,var(--track) 55%,white); stroke-width:3; stroke-linecap:round; }
+
+.track-headings > div:not(.date-heading) { padding:.2rem .15rem .35rem; }
+.track-start { display:grid; width:100%; min-height:0; place-items:center; gap:0; text-decoration:none !important; }
+.track-start .track-illustration { width:3.25rem; height:2.5rem; margin:-.2rem auto -.1rem; }
+.track-headings strong { font-size:.7rem; }
+.track-headings .frequency-bar { width:2rem; height:4px; margin:.22rem auto 0; }
+
+.timeline-row.is-today { background:linear-gradient(90deg,#fff8e4 0%,#fffaf0 48%,#fbf7ec 100%); }
+.today-track-choice { position:relative; display:grid; width:100%; min-height:5rem; place-items:center; }
+.today-track-choice .track-illustration { width:min(100%,5.4rem); height:4.3rem; opacity:.48; }
+.today-track-choice .track-add { position:absolute; right:.12rem; bottom:.2rem; }
+.track-add { border-style:solid; background:#fff; box-shadow:0 5px 15px rgb(21 28 31/.09); }
+.track-add[aria-pressed="true"] + * { opacity:1; }
+.today-start { border:0; background:linear-gradient(135deg,#e6a20e,#c87900); box-shadow:0 7px 18px rgb(194 118 0/.24); }
+
+.builder-header { display:grid !important; grid-template-columns:44px 1fr 44px; gap:.8rem; padding:.8rem max(1rem,calc((100% - 42rem)/2)) !important; }
+.builder-header__title { text-align:center; }
+.builder-header__title h1 { font-size:1.05rem; }
+.builder-header button:disabled { opacity:0; pointer-events:none; }
+.builder-header svg { width:1.15rem; }
+.builder-progress { display:flex; width:min(14rem,70%); gap:.3rem; margin:.5rem auto 0; }
+.builder-progress i { flex:1; height:3px; border-radius:5px; background:var(--color-line); }
+.builder-progress i.is-filled { background:var(--color-brand-600); }
+.builder-step { padding-top:clamp(1.7rem,5vh,3.5rem); }
+.builder-step h2 { max-width:32rem; line-height:1.04; letter-spacing:-.035em; }
+.step-label { color:var(--color-brand-600); }
+
+.track-selector { gap:.75rem; }
+.track-selector button { position:relative; min-width:0; min-height:12rem; padding:.8rem .5rem 1rem; overflow:hidden; border-radius:1.15rem; box-shadow:0 8px 26px rgb(29 38 43/.07); transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.track-selector button:hover { transform:translateY(-2px); border-color:color-mix(in srgb,var(--track) 42%,white); box-shadow:0 12px 30px rgb(29 38 43/.11); }
+.track-selector button[aria-pressed="true"] { border:2px solid var(--track); background:linear-gradient(180deg,color-mix(in srgb,var(--track) 10%,white),#fff); box-shadow:0 10px 28px color-mix(in srgb,var(--track) 18%,transparent); }
+.track-selector .track-illustration { width:100%; height:5.5rem; }
+.track-selector button > strong { font-size:1rem; color:var(--color-ink); }
+.track-selector button > small { color:var(--color-muted); font-size:.66rem; }
+.track-selector__check { position:absolute; z-index:2; top:.6rem; right:.6rem; display:grid; width:1.65rem; height:1.65rem; place-items:center; border:1px solid var(--color-line); border-radius:50%; background:#fff; color:var(--color-muted); font-size:1.1rem; }
+.track-selector__check svg { width:.9rem; height:.9rem; }
+.track-selector button[aria-pressed="true"] .track-selector__check { border-color:var(--track); background:var(--track); color:#fff; }
+.track-selector__repeat { position:absolute; right:.4rem; bottom:.35rem; left:.4rem; color:var(--track); font-size:.56rem; font-weight:800; }
+.builder-step > .primary-button { margin-top:1.25rem; background:linear-gradient(135deg,var(--color-brand-600),var(--color-brand-700)); box-shadow:0 8px 20px rgb(16 75 58/.2); }
+
+.prescription-heading { display:grid; grid-template-columns:5rem 1fr; gap:.7rem; align-items:center; }
+.prescription-heading .track-illustration { width:5rem; }
+.prescription-list article { border-top:4px solid var(--track); }
+.format-options button { min-height:9rem; text-align:left; transition:transform .18s ease,border-color .18s ease; }
+.format-options button:hover { transform:translateY(-2px); border-color:var(--color-brand-500); }
+
+@media (min-width:700px) {
+  .trail-page { width:min(calc(100% - 3rem),72rem); }
+  .bottom-nav { width:min(calc(100% - 3rem),74rem); bottom:1rem; border:1px solid var(--color-line); border-radius:1.25rem; box-shadow:0 12px 35px rgb(27 38 42/.12); }
+  .timeline-header { height:7.8rem; }
+  .track-headings { height:5.65rem; }
+  .track-headings .track-start .track-illustration { width:4.4rem; height:3.35rem; }
+  .timeline-row { min-height:8rem; }
+  .timeline-row.is-today.has-workout-picker { min-height:10.7rem; }
+}
+
+/* Keep the immersive timer comfortably inside both portrait and landscape screens. */
+.scoreboard { gap:clamp(1.25rem,4vw,4.5rem); padding:clamp(1rem,4vh,3.5rem) clamp(.5rem,2.5vw,2.5rem); }
+.round-display span { font-size:clamp(7.5rem,20vw,20rem); }
+.timer-clock strong { font-size:clamp(7rem,17vw,18rem); }
+@media (max-width:600px) and (orientation:portrait) {
+  .round-display span { font-size:clamp(7rem,42vw,11rem); }
+  .timer-clock strong { font-size:clamp(5rem,23vw,7.5rem); }
+}
