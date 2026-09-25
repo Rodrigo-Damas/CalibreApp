@@ -74,7 +74,7 @@ function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: 
 export function Trail() {
   const store = useMockStore();
   const [selected, setSelected] = useState<WorkoutSession | null>(null);
-  const [training, setTraining] = useState<{ open: false } | { open: true; track?: TrackId }>({ open: false });
+  const [training, setTraining] = useState<{ open: false } | { open: true; tracks: TrackId[] }>({ open: false });
   const calendar = useRef<HTMLDivElement>(null);
   const positioned = useRef(false);
   const today = localDateString();
@@ -86,7 +86,6 @@ export function Trail() {
       store.sessions.filter((session) => session.date >= startDate && session.date <= today && session.prescriptions.some((item) => item.track === track.id)).length,
     ])) as Record<TrackId, number>;
   }, [store.sessions, today]);
-  const recommendedTrack = tracks.reduce((best, track) => frequency[track.id] < frequency[best.id] ? track : best).id;
   const groups = useMemo(() => {
     const months: { key: string; label: string; weeks: { key: string; label: string; dates: string[] }[] }[] = [];
     for (const date of dates) {
@@ -122,7 +121,7 @@ export function Trail() {
         <div className="track-headings" role="row" aria-label="Cabeçalhos fixos das trilhas">
           <div className="date-heading" role="columnheader">Data</div>
           {tracks.map((track) => <div role="columnheader" key={track.id} style={{ "--track": track.color } as CSSProperties}>
-            <button className="track-start" onClick={() => setTraining({ open: true, track: track.id })} aria-label={`Iniciar treino com ${track.name}`}><strong>{track.name}</strong></button>
+            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><strong>{track.name}</strong></button>
             <span className="frequency-bar" aria-label={`${frequency[track.id]} treinos nos últimos 14 dias`}><i style={{ width: `${Math.max(8, frequency[track.id] * 20)}%` }} /></span>
           </div>)}
         </div>
@@ -133,13 +132,13 @@ export function Trail() {
             <h2 className="month-separator" id={`month-${month.key}`}>{month.label}</h2>
             {month.weeks.map((week) => <section className="week-group" role="rowgroup" aria-labelledby={`week-${month.key}-${week.key}`} key={`${month.key}-${week.key}`}>
               <h3 className="week-separator" id={`week-${month.key}-${week.key}`}>{week.label}</h3>
-              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} onSelect={setSelected} onStart={() => setTraining({ open: true })} recommendedTrack={recommendedTrack} />)}
+              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} onSelect={setSelected} onStart={(selectedTracks) => setTraining({ open: true, tracks: selectedTracks })} />)}
             </section>)}
           </section>)}
         </div>
       </div>
     </section>
     {selected && <SessionSheet session={selected} onClose={() => setSelected(null)} />}
-    {training.open && <WorkoutFlow initialTrack={training.track} onClose={() => setTraining({ open: false })} />}
+    {training.open && <WorkoutFlow initialTracks={training.tracks} onClose={() => setTraining({ open: false })} />}
   </>;
 }
