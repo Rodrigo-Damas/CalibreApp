@@ -8,11 +8,13 @@ import {
   type CSSProperties,
 } from "react";
 import {
-  prototypeToday,
+  addLocalDays,
+  localDateString,
   timelineDates,
   timelineEvents,
   tracks,
   type SessionEvent,
+  type TrackId,
 } from "@/mocks/data";
 import { TimelineRow } from "./TimelineRow";
 import { WorkoutFlow } from "@/features/workout/WorkoutFlow";
@@ -23,20 +25,13 @@ const sessions = timelineEvents.filter(
 const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
   month: "long",
   year: "numeric",
-  timeZone: "UTC",
 });
-const fullDateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const dateAtNoon = (date: string) => new Date(`${date}T12:00:00Z`);
+const dateAtNoon = (date: string) => { const [y,m,d]=date.split("-").map(Number); return new Date(y,m-1,d,12); };
 const weekStart = (date: string) => {
   const value = dateAtNoon(date);
-  const day = value.getUTCDay() || 7;
-  value.setUTCDate(value.getUTCDate() - day + 1);
-  return value.toISOString().slice(0, 10);
+  const day = value.getDay() || 7;
+  value.setDate(value.getDate() - day + 1);
+  return localDateString(value);
 };
 
 function SessionSheet({
@@ -131,13 +126,13 @@ function SessionSheet({
 
 export function Trail() {
   const [selected, setSelected] = useState<SessionEvent | null>(null),
-    [training, setTraining] = useState(false);
+    [training, setTraining] = useState<false | TrackId>(false);
   const calendar = useRef<HTMLDivElement>(null),
-    groupIndex = useRef(0);
+    todayRow = useRef<HTMLElement | null>(null),
+    positioned = useRef(false);
+  const today = localDateString();
   const frequency = useMemo(() => {
-    const start = dateAtNoon(prototypeToday);
-    start.setUTCDate(start.getUTCDate() - 13);
-    const startDate = start.toISOString().slice(0, 10);
+    const startDate = addLocalDays(today, -13);
     return Object.fromEntries(
       tracks.map((track) => [
         track.id,
@@ -145,11 +140,20 @@ export function Trail() {
           (session) =>
             session.track === track.id &&
             session.date >= startDate &&
-            session.date <= prototypeToday,
+            session.date <= today,
         ).length,
       ]),
     );
-  }, []);
+  }, [today]);
+  const recommendedTrack = tracks.reduce((best, track) => frequency[track.id] < frequency[best.id] ? track : best).id;
+  useEffect(() => {
+    if (positioned.current) return;
+    const row = calendar.current?.querySelector<HTMLElement>(`[data-date="${today}"]`);
+    if (!row) return;
+    todayRow.current = row;
+    positioned.current = true;
+    row.scrollIntoView({ behavior: "auto", block: "start" });
+  }, [today]);
   const groups = useMemo(() => {
     const months: {
       key: string;
@@ -163,7 +167,7 @@ export function Trail() {
       if (!month || month.key !== monthKey) {
         month = {
           key: monthKey,
-          label: monthFormatter.format(dateAtNoon(date)),
+          label: monthFormatter.format(dateAtNoon(date)).split(" de ")[0].toUpperCase(),
           weeks: [],
         };
         months.push(month);
@@ -172,7 +176,7 @@ export function Trail() {
       if (!week || week.key !== weekKey) {
         week = {
           key: weekKey,
-          label: `Semana de ${fullDateFormatter.format(dateAtNoon(weekKey))}`,
+          label: `SEMANA ${month.weeks.length + 1}`,
           dates: [],
         };
         month.weeks.push(week);
@@ -181,17 +185,6 @@ export function Trail() {
     }
     return months;
   }, []);
-  const goToOlderDates = () => {
-    const groups = [
-      ...calendar.current!.querySelectorAll<HTMLElement>(".week-group"),
-    ];
-    if (!groups.length) return;
-    groupIndex.current = Math.min(groupIndex.current + 1, groups.length - 1);
-    groups[groupIndex.current].scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
   return (
     <>
       <section className="trail-page">
@@ -208,7 +201,7 @@ export function Trail() {
                 style={{ "--track": track.color } as CSSProperties}
               >
                 <strong>{track.name}</strong>
-                <span>{frequency[track.id]} nos últimos 14 dias</span>
+                <span className="frequency-bar" aria-label={`${frequency[track.id]} treinos nos últimos 14 dias`}><i style={{width:`${Math.max(8, frequency[track.id] * 20)}%`}} /></span>
               </div>
             ))}
           </div>
@@ -251,6 +244,8 @@ export function Trail() {
                           (session) => session.date === date,
                         )}
                         onSelect={setSelected}
+                        onStart={(track) => setTraining(track ?? recommendedTrack)}
+                        recommendedTrack={recommendedTrack}
                       />
                     ))}
                   </section>
@@ -259,21 +254,11 @@ export function Trail() {
             ))}
           </div>
         </div>
-        <button className="floating-start" onClick={() => setTraining(true)}>
-          Treinar
-        </button>
-        <button
-          className="history-next"
-          onClick={goToOlderDates}
-          aria-label="Ir para datas anteriores"
-        >
-          Datas anteriores <span aria-hidden="true">↓</span>
-        </button>
       </section>
       {selected && (
         <SessionSheet session={selected} onClose={() => setSelected(null)} />
       )}{" "}
-      {training && <WorkoutFlow onClose={() => setTraining(false)} />}
+      {training && <WorkoutFlow initialTrack={training} onClose={() => setTraining(false)} />}
     </>
   );
 }
