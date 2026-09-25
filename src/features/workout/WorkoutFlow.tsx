@@ -71,8 +71,8 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     setStep("done");
   }
 
-  return <div className="workout-builder" role="dialog" aria-modal="true" aria-label="Montar treino" data-reduced-motion={store.preferences.reducedMotion || undefined}>
-    <header><div><small>NOVO TREINO</small><h1>Monte seu ritmo</h1></div><button onClick={onClose} aria-label="Fechar">×</button></header>
+  return <div className={`workout-builder${step === "running" ? " timer-active" : ""}`} role="dialog" aria-modal="true" aria-label={step === "running" ? "Cronômetro" : "Montar treino"} data-reduced-motion={store.preferences.reducedMotion || undefined}>
+    {step !== "running" && <header><div><small>NOVO TREINO</small><h1>Monte seu ritmo</h1></div><button onClick={onClose} aria-label="Fechar">×</button></header>}
     <main>
       {step === "tracks" && <section className="builder-step"><p className="step-label">1 · TRILHAS</p><h2>O que entra neste treino?</h2><TrackSelector selected={selected} onToggle={toggle} repeated={repeated} />{selected.some((item) => repeated.includes(item)) && <aside className="recovery-note">Você já treinou esta trilha hoje. Mais uma sessão pode cobrar bastante do mesmo movimento. Quer continuar? A escolha é sua.</aside>}<button className="primary-button" disabled={!selected.length} onClick={() => setStep("arrival")}>Continuar</button></section>}
       {step === "arrival" && <section className="builder-step arrival-step"><p className="step-label">2 · CONDIÇÃO</p><h2>Quanto você tem no tanque hoje?</h2><p className="energy-hint">Toque no nível que melhor representa sua energia agora.</p><div className="energy-battery" role="radiogroup" aria-label="Nível de energia">{arrivals.map(([id, label], index) => <button role="radio" aria-checked={arrival === id} aria-label={label} key={id} onClick={() => selectArrival(id)} style={{ "--energy-level": index + 1 } as CSSProperties}><span className="energy-cell" aria-hidden="true" /><strong>{label}</strong></button>)}<span className="battery-bolt" aria-hidden="true"><Zap /></span></div></section>}
