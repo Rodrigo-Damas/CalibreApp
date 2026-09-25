@@ -2,36 +2,46 @@
 
 import { useState } from "react";
 import {
-  prototypeToday,
+  localDateString,
   tracks,
   type SessionEvent,
   type TrackId,
 } from "@/mocks/data";
 import { WorkoutNode } from "./WorkoutNode";
+import { ConnectionLine } from "./ConnectionLine";
 
 const ids: TrackId[] = ["push", "pull", "legs", "core"];
 const formatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
   weekday: "short",
-  timeZone: "UTC",
 });
 
 export function TimelineRow({
   date,
   sessions,
   onSelect,
+  onStart,
+  recommendedTrack,
 }: {
   date: string;
   sessions: SessionEvent[];
   onSelect: (session: SessionEvent) => void;
+  onStart?: (track?: TrackId) => void;
+  recommendedTrack?: TrackId;
 }) {
   const [expanded, setExpanded] = useState<TrackId | null>(null),
-    label = formatter.format(new Date(`${date}T12:00:00Z`)).replace(".", "");
+    today = localDateString(),
+    state = date < today ? "past" : date > today ? "future" : "today",
+    parts = date.split("-").map(Number),
+    localDate = new Date(parts[0], parts[1] - 1, parts[2], 12);
   return (
-    <div className="timeline-row" role="row" data-date={date}>
+    <div className={`timeline-row is-${state}`} role="row" data-date={date}>
+      <ConnectionLine sessions={sessions} />
       <div className="date-cell" role="rowheader">
-        <time dateTime={date}>{label}</time>
-        {date === prototypeToday ? (
+        <time dateTime={date}>
+          <span className="weekday">{formatter.format(localDate).replace(".", "")}</span>
+          <span className="day-number">{localDate.getDate()}</span>
+        </time>
+        {state === "today" ? (
           <span className="today-label">Hoje</span>
         ) : null}
       </div>
@@ -57,6 +67,11 @@ export function TimelineRow({
                 />
               ))}
             </div>
+            {state === "today" && !sessions.length && recommendedTrack === id && onStart && (
+              <button className="today-start" onClick={() => onStart(id)}>
+                Iniciar EMOM de 5 min
+              </button>
+            )}
             {list.length > 2 && (
               <button
                 className="expand-nodes"
