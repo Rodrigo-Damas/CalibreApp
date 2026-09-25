@@ -1,48 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { enableEmomAudio, loadEmomPreferences, playEmomSignal, saveEmomPreferences, type EmomPreferences } from "./emomAudio";
-
-const TOTAL_SECONDS = 300;
-export function EmomTimer({ exercise, reps, onFinish }: { exercise: string; reps: number; onFinish: () => void }) {
-  const [elapsed, setElapsed] = useState(0), [running, setRunning] = useState(false);
-  const [preferences, setPreferences] = useState<EmomPreferences>(loadEmomPreferences);
-  const startedAt = useRef(0), accumulated = useRef(0), emitted = useRef(new Set<number>()), finished = useRef(false);
-
-  useEffect(() => {
-    if (!running) return;
-    const update = () => {
-      const seconds = Math.min(TOTAL_SECONDS, (accumulated.current + Date.now() - startedAt.current) / 1000);
-      const whole = Math.floor(seconds);
-      for (let second = 55; second <= whole; second++) {
-        if (second > TOTAL_SECONDS || emitted.current.has(second)) continue;
-        const withinMinute = second % 60;
-        if (withinMinute >= 55 && withinMinute <= 59) { emitted.current.add(second); void playEmomSignal("warning", preferences); }
-        else if (withinMinute === 0 && second < TOTAL_SECONDS) { emitted.current.add(second); void playEmomSignal("minute", preferences); }
-      }
-      setElapsed(seconds);
-      if (seconds >= TOTAL_SECONDS && !finished.current) {
-        finished.current = true; setRunning(false); void playEmomSignal("finish", preferences); onFinish();
-      }
-    };
-    update();
-    const interval = window.setInterval(update, 100);
-    const visibility = () => update();
-    document.addEventListener("visibilitychange", visibility);
-    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", visibility); };
-  }, [running, preferences, onFinish]);
-
-  const start = () => { void enableEmomAudio(); startedAt.current = Date.now(); setRunning(true); };
-  const pause = () => { accumulated.current += Date.now() - startedAt.current; setRunning(false); };
-  const end = () => { setRunning(false); onFinish(); };
-  const changePreferences = (next: EmomPreferences) => { setPreferences(next); saveEmomPreferences(next); };
-  const minute = Math.min(5, Math.floor(elapsed / 60) + 1), remaining = Math.max(0, 60 - Math.floor(elapsed % 60));
-  const countdown = remaining <= 5 && running;
-  return <section className={`emom-timer ${countdown ? "is-countdown" : ""}`} aria-label="Temporizador EMOM">
-    <p className="step-label">EMOM · 5 MINUTOS</p><h2>Minuto {minute} de 5</h2>
-    <div className="timer-clock" role="timer" aria-live="off"><strong>{String(remaining).padStart(2,"0")}</strong><span>segundos neste minuto</span></div>
-    <progress value={elapsed} max={TOTAL_SECONDS} aria-label="Progresso total" /><p>{Math.floor(elapsed)} de 300 segundos</p>
-    <div className="timer-prescription"><strong>{exercise}</strong><span>{reps} repetições</span><small>{countdown ? `Prepare-se: próximo minuto em ${remaining}` : "Concluiu as repetições? Descanse até o próximo minuto."}</small></div>
-    <div className="timer-controls">{!running && elapsed === 0 && <button className="primary-button" onClick={start}>Iniciar</button>}{running && <button className="primary-button" onClick={pause}>Pausar</button>}{!running && elapsed > 0 && elapsed < TOTAL_SECONDS && <button className="primary-button" onClick={start}>Continuar</button>}<button className="secondary-button" onClick={end}>Encerrar</button></div>
-    <fieldset className="timer-preferences"><legend>Sinais</legend><label><input type="checkbox" checked={preferences.sound} onChange={e=>changePreferences({...preferences,sound:e.target.checked})}/> Som</label><label>Volume <input aria-label="Volume" type="range" min="0" max="1" step="0.05" value={preferences.volume} onChange={e=>changePreferences({...preferences,volume:Number(e.target.value)})}/></label><label><input type="checkbox" checked={preferences.vibration} onChange={e=>changePreferences({...preferences,vibration:e.target.checked})}/> Vibração</label><button onClick={async()=>{await enableEmomAudio();void playEmomSignal("minute",preferences)}}>Ouvir prévia</button></fieldset>
-  </section>;
-}
+import{useEffect,useRef,useState}from"react";import{tracks,type SessionPrescription,type WorkoutFormat}from"@/mocks/data";import{sequence}from"./recommendationEngine";import{enableSignalAudio,playSignal,type SignalPreferences}from"./signalAudio";
+type Props={prescriptions?:SessionPrescription[];format?:WorkoutFormat;preferences?:SignalPreferences;exercise?:string;reps?:number;onFinish:(elapsed?:number)=>void;onInterrupt?:(elapsed:number)=>void};
+export function WorkoutTimer({prescriptions,format="blocks",preferences={sound:true,volume:.45,vibration:true},exercise,reps,onFinish,onInterrupt}:Props){const doses:SessionPrescription[]=prescriptions?.length?prescriptions:[{track:"push",exerciseKey:"floor-push-up",suggestedShortReps:reps||1,chosenShortReps:reps||1,displayedReps:reps||1,sets:5,estimatedVolume:(reps||1)*5}],sets=doses[0].sets,order=sequence(doses,sets,format),total=order.length*60;
+const[elapsed,setElapsed]=useState(-10),[running,setRunning]=useState(false),[paused,setPaused]=useState(false),[confirm,setConfirm]=useState(false);const started=useRef(0),offset=useRef(0),emitted=useRef(new Set<number>()),done=useRef(false);
+useEffect(()=>{if(!running||paused)return;const tick=()=>{const now=(offset.current+Date.now()-started.current)/1000-10,whole=Math.floor(now);for(let second=Math.max(-10,Math.floor(elapsed)+1);second<=whole;second++){if(emitted.current.has(second))continue;const within=((second%60)+60)%60;if(second===0||(second>0&&within===0)){emitted.current.add(second);void playSignal("start",preferences)}else if(second>=0&&within>=55&&within<=58){emitted.current.add(second);void playSignal("prepare",preferences)}}setElapsed(Math.min(total,now));if(now>=total&&!done.current){done.current=true;setRunning(false);void playSignal("finish",preferences);onFinish(total)}};tick();const id=setInterval(tick,100);const visibility=()=>tick();document.addEventListener("visibilitychange",visibility);return()=>{clearInterval(id);document.removeEventListener("visibilitychange",visibility)}},[running,paused,total,preferences,onFinish,elapsed]);
+function start(){void enableSignalAudio();started.current=Date.now();setRunning(true);setPaused(false)}function pause(){offset.current+=Date.now()-started.current;setPaused(true);setRunning(false)}function resume(){started.current=Date.now();setRunning(true);setPaused(false)}
+const active=Math.min(order.length-1,Math.max(0,Math.floor(Math.max(0,elapsed)/60))),dose=order[active],track=tracks.find(t=>t.id===dose.track)!,within=Math.max(0,Math.floor(elapsed)%60),remaining=elapsed<0?Math.ceil(-elapsed):60-within,final=active===order.length-1,command=elapsed<0?"Prepare-se.":within>=55?"Prepare-se.":within<15?(final?"Última. Feche no seu ritmo.":`Comece. ${dose.displayedReps} repetições.`):"Terminou? Respire. Aguarde o próximo sinal.";
+return <section className="workout-timer" aria-label="Execução do treino"><p className="step-label">EXECUÇÃO AUTOMÁTICA</p><h2>{elapsed<0?`Começa em ${remaining}`:`Minuto ${active+1} de ${order.length}`}</h2><div className="timer-clock" role="timer"><strong>{String(remaining).padStart(2,"0")}</strong><span>segundos</span></div><div className="timer-prescription"><small>{track.name}</small><strong>{exercise||track.exercise}</strong><span>{dose.displayedReps} repetições</span><p aria-live="polite">{command}</p></div>{!running&&elapsed===-10&&<button className="primary-button" onClick={start}>Começar contagem</button>}{running&&<button className="timer-pause" onClick={pause}>Pausar</button>}{paused&&<button className="timer-pause" onClick={resume}>Continuar</button>}<button className="timer-exit" onClick={()=>setConfirm(true)}>Encerrar treino</button>{confirm&&<div className="inline-confirm" role="alertdialog" aria-label="Confirmar interrupção"><p>Ao encerrar, o treino ficará marcado como interrompido e nenhum volume será estimado.</p><button onClick={()=>setConfirm(false)}>Continuar treino</button><button onClick={()=>onInterrupt?.(Math.max(0,Math.floor(elapsed)))}>Marcar como interrompido</button></div>}</section>}
+export const EmomTimer=WorkoutTimer;

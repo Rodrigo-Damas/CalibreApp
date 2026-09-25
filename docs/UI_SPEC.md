@@ -1,23 +1,21 @@
-# Especificação de interface — Calibre
+# Especificação de interface
 
-## Jornada histórica
+## Jornada
 
-A Home apresenta simultaneamente **Empurrar, Puxar, Pernas, Core e Cardio**. Cada caminho é uma sequência curta: esferas preenchidas e conexões sólidas são práticas realizadas; a esfera com troféu é o recorde; a conexão pontilhada leva à única esfera vazia, a recomendação atual. O comprimento de cada histórico torna o desenvolvimento relativo reconhecível antes dos números. Volume semanal e acumulado substituem XP e tempo como sinais principais.
+Quatro colunas fixas: Empurrar, Puxar, Pernas e Core. O histórico fica acima e hoje é sempre a última linha; não existem nós futuros. Sessões concluídas, combinadas e interrompidas abrem resumo com tempo, quantidade de sessões e volume estimado total e por trilha.
 
-As cores são identidades semânticas (`--track-push`, `--track-pull`, `--track-legs`, `--track-core` e `--track-cardio`). Uma prática possui uma lista de capacidades, permitindo que uma esfera híbrida use futuramente gradiente ou divisão de cores. O estado opcional `goal` existe no modelo, mas não cria controles incompletos.
+## Montagem
 
-## Composição por conexão
+Ordem obrigatória: trilhas → condição da sessão → Curto/Longo → Blocos/Circuito (somente com múltiplas trilhas) → revisão editável → execução. Curto corresponde a 5 minutos por trilha. Longo corresponde a 10 minutos por trilha e usa metade da recomendação curta, arredondada para cima. Combinações mantêm prescrições independentes.
 
-`INICIAR TREINO` abre a montagem. O usuário pode tocar nas recomendações ou arrastar uma até outra; ambas as entradas produzem a mesma seleção acessível. Destinos sugeridos recebem halo e o texto “Combinação sugerida”. A ligação pontilhada comunica sugestão, enquanto seleção e borda sólida comunicam confirmação. A teia só ganha ênfase nessa etapa.
+A condição tem cinco posições e altera apenas a sugestão da sessão. Ajustes manuais nunca são bloqueados. Um salto acima de 20%, calculado com arredondamento convencional, recebe confirmação conversacional; uma redução acima de 20% recebe observação leve.
 
-Os controles `+` e `−` repetem uma capacidade e mostram `2×`, `3×` sem duplicar a trilha. Cada ocorrência permanece na fila. A prescrição intercala capacidades quando possível e determina exercício básico, volume e ordem; combinações não pontuam nesta versão.
+## Execução e Pulso
 
-## Prática e feedback
+Há contagem regressiva de 10 segundos, comandos na virada, quatro sinais preparatórios e encerramento próprio. Não há interação entre séries. Pausa é secundária; interrupção registra o tempo e não estima volume.
 
-Antes de cada prática, exercício e volume continuam visíveis enquanto a sugestão técnica aparece como camada opcional. Há somente “Aceitar sugestão” e “Manter prática padrão”. Ao aceitar, registra-se `Fiz`, `Em parte` ou `Não fiz` antes da avaliação principal de seis esforços.
+Pulso é uma linha contínua acessível com: No limite, Pesado, Na medida, Leve e Sobrou. Começa visualmente no centro sem registrar escolha. O histórico real explica a próxima recomendação.
 
-A execução é orientada por volume: capacidade, exercício, prescrito, concluído, blocos e próxima prática. A capacidade atual colore ambiente e progresso sem substituir os rótulos textuais. O motor em memória pode elevar, manter ou reduzir a recomendação. A conclusão preenche as próximas esferas, solidifica conexões, soma volumes e só altera o recorde quando ele é superado.
+## Persistência e repetição
 
-## Estado e acessibilidade
-
-`MockStoreProvider` mantém tudo em memória; recarregar restaura os mocks. Não há autenticação, banco ou algoritmo definitivo. Controles têm nomes acessíveis, `aria-pressed`, foco visível e alvos mínimos de 44 px. O toque oferece alternativa integral ao arraste, e `prefers-reduced-motion` desativa a celebração animada.
+Várias sessões podem ocorrer no mesmo dia, inclusive repetindo as quatro trilhas. A montagem comunica recuperação sem bloquear. Histórico, recordes e preferências de som, volume, vibração e movimento ficam salvos localmente.
