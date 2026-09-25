@@ -1,2 +1,39 @@
-import{localDateString,tracks,type WorkoutSession}from"@/mocks/data";import{WorkoutNode}from"./WorkoutNode";import{ConnectionLine}from"./ConnectionLine";
-export function TimelineRow({date,sessions,onSelect,onStart}:{date:string;sessions:WorkoutSession[];onSelect:(s:WorkoutSession)=>void;onStart?:()=>void}){const[y,m,d]=date.split("-").map(Number),value=new Date(y,m-1,d,12),today=localDateString();return <div className={`timeline-row ${date===today?"is-today":"is-past"}`} role="row" data-date={date}><ConnectionLine sessions={sessions}/><div className="date-cell" role="rowheader"><time dateTime={date}><span className="weekday">{value.toLocaleDateString("pt-BR",{weekday:"short"}).replace(".","")}</span><span className="day-number">{d}</span></time>{date===today&&<span className="today-label">Hoje</span>}</div>{tracks.map(t=><div className="track-slot" role="cell" key={t.id} aria-label={`${t.name}: ${sessions.filter(s=>s.prescriptions.some(p=>p.track===t.id)).length} sessões`}><div className="node-group">{sessions.map(s=>{const p=s.prescriptions.find(x=>x.track===t.id);return p?<WorkoutNode key={`${s.id}-${t.id}`} session={s} prescription={p} onSelect={onSelect}/>:null})}</div>{date===today&&t.id==="push"&&onStart&&<button className="today-start" onClick={onStart}>Treinar</button>}</div>)}</div>}
+"use client";
+
+import { useState } from "react";
+import { localDateString, tracks, type TrackId, type WorkoutSession } from "@/mocks/data";
+import { ConnectionLine } from "./ConnectionLine";
+import { WorkoutNode } from "./WorkoutNode";
+
+const formatter = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
+
+export function TimelineRow({ date, sessions, onSelect, onStart, recommendedTrack }: {
+  date: string;
+  sessions: WorkoutSession[];
+  onSelect: (session: WorkoutSession) => void;
+  onStart?: (track?: TrackId) => void;
+  recommendedTrack?: TrackId;
+}) {
+  const [expanded, setExpanded] = useState<TrackId | null>(null);
+  const today = localDateString();
+  const state = date < today ? "past" : date > today ? "future" : "today";
+  const [year, month, day] = date.split("-").map(Number);
+  const value = new Date(year, month - 1, day, 12);
+
+  return <div className={`timeline-row is-${state}`} role="row" data-date={date}>
+    <ConnectionLine sessions={sessions} />
+    <div className="date-cell" role="rowheader">
+      <time dateTime={date}><span className="weekday">{formatter.format(value).replace(".", "")}</span><span className="day-number">{day}</span></time>
+      {state === "today" && <span className="today-label">Hoje</span>}
+    </div>
+    {tracks.map((track) => {
+      const list = sessions.filter((session) => session.prescriptions.some((item) => item.track === track.id)).sort((a, b) => a.time.localeCompare(b.time));
+      const visible = expanded === track.id ? list : list.slice(0, 2);
+      return <div className="track-slot" role="cell" key={track.id} aria-label={`${track.name}: ${list.length} sessões`}>
+        <div className="node-group">{visible.map((session) => <WorkoutNode key={`${session.id}-${track.id}`} session={session} prescription={session.prescriptions.find((item) => item.track === track.id)!} onSelect={onSelect} />)}</div>
+        {state === "today" && !sessions.length && recommendedTrack === track.id && onStart && <button className="today-start" onClick={() => onStart(track.id)}>Iniciar EMOM de 5 min</button>}
+        {list.length > 2 && <button className="expand-nodes" onClick={() => setExpanded(expanded === track.id ? null : track.id)} aria-expanded={expanded === track.id}>{expanded === track.id ? "Recolher" : `+${list.length - 2}`}</button>}
+      </div>;
+    })}
+  </div>;
+}
