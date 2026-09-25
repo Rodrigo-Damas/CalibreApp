@@ -19,9 +19,9 @@ export const trackIds=Object.keys(definitions) as TrackId[];
 
 const session=(id:string,date:string,time:string,track:TrackId,repsPerSet:number,extra:Partial<SessionEvent>={}):SessionEvent=>({type:"session",id,date,time,track,exercise:definitions[track].exercise,sets:5,repsPerSet,durationMinutes:5,volume:repsPerSet*5,effort:"Normal",...extra});
 
-/** 28 consecutive prototype days. Empty days are represented by no event. */
+/** Prototype history, starting today and moving backwards. Empty days have no event. */
 export const prototypeToday="2026-09-24";
-export const timelineDates=Array.from({length:28},(_,i)=>{const d=new Date("2026-08-28T12:00:00Z");d.setUTCDate(d.getUTCDate()+i);return d.toISOString().slice(0,10)});
+export const timelineDates=Array.from({length:28},(_,i)=>{const d=new Date(`${prototypeToday}T12:00:00Z`);d.setUTCDate(d.getUTCDate()-i);return d.toISOString().slice(0,10)});
 export const timelineEvents:TimelineEvent[]=[
   session("s01","2026-08-28","07:10","push",10),session("s02","2026-08-29","18:20","legs",14),
   session("s03","2026-08-31","07:30","pull",5,{combinedId:"combo-a"}),session("s04","2026-08-31","07:35","core",8,{combinedId:"combo-a"}),
