@@ -31,7 +31,7 @@ export function TimelineRow({ date, sessions, onSelect, onStart, recommendedTrac
       const visible = expanded === track.id ? list : list.slice(0, 2);
       return <div className="track-slot" role="cell" key={track.id} aria-label={`${track.name}: ${list.length} sessões`}>
         <div className="node-group">{visible.map((session) => <WorkoutNode key={`${session.id}-${track.id}`} session={session} prescription={session.prescriptions.find((item) => item.track === track.id)!} onSelect={onSelect} />)}</div>
-        {state === "today" && !sessions.length && recommendedTrack === track.id && onStart && <button className="today-start" onClick={() => onStart(track.id)}>Iniciar EMOM de 5 min</button>}
+        {state === "today" && !sessions.length && recommendedTrack === track.id && onStart && <button className="today-start" onClick={() => onStart()}>Iniciar treino</button>}
         {list.length > 2 && <button className="expand-nodes" onClick={() => setExpanded(expanded === track.id ? null : track.id)} aria-expanded={expanded === track.id}>{expanded === track.id ? "Recolher" : `+${list.length - 2}`}</button>}
       </div>;
     })}
