@@ -1,43 +1,20 @@
-# Calibre Web
+# Calibre
 
-Protótipo responsivo do motor de progressão em calistenia do Calibre. A experiência permite navegar por cinco trilhas independentes, montar uma sessão de até cinco práticas, realizar o fluxo de aquecimento e EMOM, registrar a percepção de esforço e visualizar a próxima recomendação adaptada. Todos os dados e estados são simulados e ficam apenas na memória.
+Aplicação local de treino de calistenia organizada em quatro trilhas permanentes: **Empurrar** (Flexão no solo), **Puxar** (Barra fixa), **Pernas** (Agachamento livre) e **Core** (Abdominal no solo).
 
-## Executar
+## Fluxo
 
-Requer Node.js 20 ou superior.
+A jornada é uma timeline vertical que termina em hoje, sem dias futuros. O CTA **Treinar** abre a seleção de uma a quatro trilhas, condição pré-sessão, duração, formato quando aplicável e revisão editável. Curto usa 5 séries; Longo usa 10 e `ceil(recomendação curta / 2)` repetições por série. Volume é sempre identificado como **estimado**.
+
+Sessões múltiplas no mesmo dia e prescrições independentes em Blocos ou Circuito são suportadas. A execução tem contagem inicial, sinais automáticos e nenhuma confirmação entre séries. O encerramento Pulso registra uma entre cinco percepções; interrupções guardam tempo, mas não presumem volume.
+
+## Desenvolvimento
 
 ```bash
-npm install
 npm run dev
+npm test
+npm run lint
+npm run build
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000).
-
-## Scripts
-
-- `npm run dev` — servidor local com hot reload.
-- `npm run build` — build de produção.
-- `npm run lint` — validação ESLint.
-- `npm test` — testes Vitest.
-
-## Validar responsividade
-
-Abra as ferramentas de desenvolvimento do navegador e teste, no mínimo:
-
-- celular: 375 × 812;
-- tablet: 768 × 1024 (confira o drawer lateral);
-- desktop: 1440 × 900 (confira a sidebar persistente).
-
-Percorra **Jornada** e **Evolução**, escolha práticas em uma ou mais trilhas e conclua o ciclo completo. O acesso ao onboarding demonstrativo fica disponível no perfil da navegação lateral. O refresh restaura os mocks iniciais.
-
-## Preview no Vercel
-
-Importe o repositório no Vercel ou use a CLI (`vercel`). O framework e o comando de build são detectados por `vercel.json`. Cada pull request conectado ao Vercel gera um preview. Não são necessárias variáveis de ambiente, credenciais ou identificadores de projeto; não versione a pasta `.vercel`.
-
-Consulte `docs/UI_SPEC.md` e `docs/RESPONSIVE_SPEC.md` para decisões de produto e layout.
-
-## Jornada adaptativa por volume
-
-A Home compara simultaneamente as cinco capacidades permanentes por meio de históricos de esferas, recordes e uma única recomendação futura por trilha. Toque diretamente na próxima esfera para uma prática simples ou use **INICIAR TREINO** para combinar capacidades por toque ou arraste. Participações repetidas são preservadas e intercaladas na prescrição.
-
-O fluxo seguinte confirma exercício básico, volume e ordem, oferece uma sugestão técnica opcional, orienta os blocos concluídos e coleta resultado da sugestão e esforço. A conclusão atualiza em memória histórico, volume semanal/acumulado, recomendação e recorde condicional. Consulte `docs/UI_SPEC.md` para a semântica completa e `docs/RESPONSIVE_SPEC.md` para a matriz de 320 px, mobile, tablet e desktop.
+Histórico e preferências são persistidos defensivamente no armazenamento local. A recomendação pura fica em `src/features/workout/recommendationEngine.ts`.

@@ -1,24 +1,7 @@
 # Especificação responsiva
 
-## Mobile — 320–767 px
-
-- As cinco jornadas formam uma constelação vertical rolável; histórico, recorde e recomendação permanecem legíveis sem rolagem horizontal.
-- O CTA fica acima da navegação inferior e ao alcance do polegar. Controles de quantidade têm pelo menos 44 × 44 px.
-- A sessão ocupa a viewport e mantém prescrição, progresso por volume, próxima prática e feedback em uma coluna.
-- Em 320 px, os nós históricos reduzem discretamente, mas nomes e volumes não desaparecem.
-
-## Tablet — 768–1023 px
-
-- A navegação inferior vira drawer lateral temporário, preservando o cabeçalho.
-- As cinco jornadas usam colunas compactas; a confirmação da sessão pode rolar a sequência horizontalmente dentro do próprio componente.
-- O CTA flutua na largura útil sem cobrir o drawer.
-
-## Desktop — a partir de 1024 px
-
-- A sidebar de 272 px permanece visível, e o CTA respeita esse deslocamento.
-- As cinco capacidades aparecem lado a lado, permitindo comparar visualmente comprimentos históricos.
-- O conteúdo continua limitado a 1184 px, com composição e confirmação centralizadas.
-
-## Matriz de inspeção
-
-Validar **320 px**, **375 × 812**, **768 × 1024** e **1440 × 900**. Conferir ausência de overflow horizontal, drawer/sidebar, foco por teclado, alternativa ao arraste, repetição, seis esforços, preenchimento de conclusão e respeito a movimento reduzido.
+- **320–379 px:** timeline mantém quatro colunas identificadas, com rolagem quando necessária; controles usam área mínima de 44 px; escolhas de duração e formato empilham.
+- **Mobile:** cabeçalho das trilhas fica fixo e a navegação ocupa a safe area inferior. A timeline abre em hoje e permite rolar somente para o passado.
+- **Tablet e desktop:** navegação passa para a lateral, topbar permanece fixa e a área principal respeita largura máxima de leitura.
+- **Todas as larguras:** revisão conserva valores por trilha; a sequência detalhada é secundária; execução mostra apenas trilha, exercício, repetições, minuto, relógio e comando.
+- `prefers-reduced-motion` remove transições e animações não essenciais. Foco visível, contraste, rótulos textuais, estados vazios e estado de hidratação não dependem de cor.
