@@ -5,11 +5,11 @@ import {
   createTimelineDates,
   localDateString,
   tracks,
-  type TrackId,
   type WorkoutSession,
 } from "@/mocks/data";
 import { useMockStore } from "@/mocks/store";
 import { WorkoutFlow } from "@/features/workout/WorkoutFlow";
+import { TrackIcon } from "@/components/icons/TrackIcon";
 import { TimelineRow } from "./TimelineRow";
 
 const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
@@ -73,7 +73,7 @@ function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: 
 export function Trail() {
   const store = useMockStore();
   const [selected, setSelected] = useState<WorkoutSession | null>(null);
-  const [training, setTraining] = useState<{ open: false } | { open: true; tracks: TrackId[] }>({ open: false });
+  const [training, setTraining] = useState(false);
   const calendar = useRef<HTMLDivElement>(null);
   const positioned = useRef(false);
   const today = localDateString();
@@ -112,7 +112,7 @@ export function Trail() {
         <div className="track-headings" role="row" aria-label="Cabeçalhos fixos das trilhas">
           <div className="date-heading" role="columnheader">Data</div>
           {tracks.map((track) => <div role="columnheader" key={track.id} style={{ "--track": track.color } as CSSProperties}>
-            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><i aria-hidden="true" /><strong>{track.name}</strong></button>
+            <div className="track-heading" aria-label={track.name}><TrackIcon track={track.id} decorative /><strong>{track.name}</strong></div>
           </div>)}
         </div>
       </header>
@@ -122,13 +122,14 @@ export function Trail() {
             <h2 className="month-separator" id={`month-${month.key}`}>{month.label}</h2>
             {month.weeks.map((week) => <section className="week-group" role="rowgroup" aria-labelledby={`week-${month.key}-${week.key}`} key={`${month.key}-${week.key}`}>
               <h3 className="week-separator" id={`week-${month.key}-${week.key}`}>{week.label}</h3>
-              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} onSelect={setSelected} onStart={(selectedTracks) => setTraining({ open: true, tracks: selectedTracks })} />)}
+              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} onSelect={setSelected} />)}
             </section>)}
           </section>)}
         </div>
       </div>
+      {!selected && !training && <button className="trail-workout-fab" onClick={() => setTraining(true)}><strong>Começar treino</strong><small>Selecionar treino</small></button>}
     </section>
     {selected && <SessionSheet session={selected} onClose={() => setSelected(null)} />}
-    {training.open && <WorkoutFlow initialTracks={training.tracks} onClose={() => setTraining({ open: false })} />}
+    {training && <WorkoutFlow onClose={() => setTraining(false)} />}
   </>;
 }
