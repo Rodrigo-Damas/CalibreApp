@@ -75,6 +75,8 @@ export function Trail() {
   const [selected, setSelected] = useState<WorkoutSession | null>(null);
   const [training, setTraining] = useState(false);
   const calendar = useRef<HTMLDivElement>(null);
+  const workoutButton = useRef<HTMLButtonElement>(null);
+  const openedWorkout = useRef(false);
   const positioned = useRef(false);
   const today = localDateString();
   const dates = useMemo(() => createTimelineDates(today), [today]);
@@ -106,6 +108,11 @@ export function Trail() {
     row.scrollIntoView({ behavior: "auto", block: "end" });
   }, [today]);
 
+  useEffect(() => {
+    if (training) openedWorkout.current = true;
+    else if (openedWorkout.current) workoutButton.current?.focus();
+  }, [training]);
+
   return <>
     <section className="trail-page" aria-busy={!store.hydrated}>
       <header className="timeline-header">
@@ -127,8 +134,8 @@ export function Trail() {
           </section>)}
         </div>
       </div>
-      {!selected && !training && <button className="trail-workout-fab primary-button" onClick={() => setTraining(true)}>Começar treino</button>}
     </section>
+    {!selected && !training && <div className="trail-workout-fab-layer"><button ref={workoutButton} type="button" className="trail-workout-fab primary-button" aria-label="Começar treino" onClick={() => setTraining(true)}>Começar treino</button></div>}
     {selected && <SessionSheet session={selected} onClose={() => setSelected(null)} />}
     {training && <WorkoutFlow onClose={() => setTraining(false)} />}
   </>;
