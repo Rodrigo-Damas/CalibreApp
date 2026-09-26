@@ -1,3 +1,21 @@
-"use client";import{useState}from"react";import type{Perception}from"@/mocks/data";
-const choices:[Perception,string,string][]=[["limit","No limite","Hoje cobrou bastante."],["heavy","Pesado","Foi exigente."],["right","Na medida","Ritmo certo."],["light","Leve","Você terminou com margem."],["spare","Sobrou","Tem espaço para avançar."]];
-export function WorkoutPulse({onConfirm}:{onConfirm:(p:Perception)=>void}){const[selected,setSelected]=useState<Perception|null>(null),visual=selected?choices.findIndex(x=>x[0]===selected):2,current=selected?choices[visual]:null;function choose(p:Perception){setSelected(p);if("vibrate"in navigator)navigator.vibrate(15)}return <section className="pulse"><p className="step-label">PULSO</p><h2>Como você terminou?</h2><div className="pulse-control" role="radiogroup" aria-label="Percepção ao terminar" style={{"--pulse-position":`${visual*25}%`}as React.CSSProperties}>{choices.map(([id,label,phrase])=><button key={id} role="radio" aria-checked={selected===id} aria-label={`${label} — ${phrase}`} onClick={()=>choose(id)}><i/><span>{label}</span></button>)}</div><div className="pulse-copy" aria-live="polite">{current?<><strong>{current[1]}</strong><p>{current[2]}</p></>:<p>Escolha o ponto que melhor representa este treino.</p>}</div><button className="primary-button pulse-finish" disabled={!selected} onClick={()=>selected&&onConfirm(selected)}>Concluir</button></section>}
+"use client";
+
+import { useState } from "react";
+import type { Perception } from "@/mocks/data";
+
+const choices: [Perception, string][] = [["limit", "No limite"], ["heavy", "Pesado"], ["right", "Na medida"], ["light", "Leve"], ["spare", "Sobrou"]];
+
+export function WorkoutPulse({ onConfirm }: { onConfirm: (perception: Perception) => void }) {
+  const [selected, setSelected] = useState<Perception | null>(null);
+  function choose(perception: Perception) {
+    setSelected(perception);
+    if ("vibrate" in navigator) navigator.vibrate(15);
+  }
+  return <section className="pulse builder-step">
+    <h2>Como foi o treino?</h2>
+    <div className="pulse-control" role="radiogroup" aria-label="Como foi o treino">
+      {choices.map(([id, label]) => <button key={id} role="radio" aria-checked={selected === id} onClick={() => choose(id)}><i aria-hidden="true" /><span>{label}</span></button>)}
+    </div>
+    <button className="primary-button pulse-finish" disabled={!selected} onClick={() => selected && onConfirm(selected)}>Salvar treino</button>
+  </section>;
+}

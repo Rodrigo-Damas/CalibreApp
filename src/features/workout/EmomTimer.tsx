@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Pause, Play, Square, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { type SessionPrescription, type WorkoutFormat } from "@/mocks/data";
+import { tracks, type SessionPrescription, type WorkoutFormat } from "@/mocks/data";
 import { sequence } from "./recommendationEngine";
 import { enableSignalAudio, playSignal, type SignalPreferences } from "./signalAudio";
 
@@ -84,17 +84,28 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
   const command = remaining === 1 && (elapsed < 0 || active < order.length - 1);
   const timerState = paused ? "paused" : command ? "command" : attention ? "attention" : elapsed < 0 ? "preparing" : "running";
   const clock = `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
+  const current = order[active];
+  const currentTrack = tracks.find((track) => track.id === current.track)!;
+  const progress = Math.max(0, Math.min(100, (Math.max(0, elapsed) / total) * 100));
 
   return <section className="workout-timer" aria-label="Cronômetro" data-state={timerState} data-reduced-motion={settings.reducedMotion || undefined}>
     <header className="timer-header">
       <button type="button" aria-label="Voltar" onClick={() => setConfirm(true)}><ArrowLeft aria-hidden="true" /></button>
-      <strong>ROUND {active + 1} DE {order.length}</strong>
+      <strong>Treino em andamento</strong>
     </header>
 
-    <div className="scoreboard">
-      <div className="round-display" aria-label={`Round ${active + 1}`}><span aria-hidden="true">{active + 1}</span></div>
+    <div className="timer-content" style={{ "--track": currentTrack.color } as React.CSSProperties}>
+      <div className="timer-exercise">
+        <span>{currentTrack.name}</span>
+        <h1>{currentTrack.exercise}</h1>
+        <strong>{current.displayedReps} repetições</strong>
+      </div>
       <div className="timer-clock" role="timer" aria-label={`${remaining} ${remaining === 1 ? "segundo" : "segundos"}`} aria-live={command ? "assertive" : "off"}>
         <strong aria-hidden="true">{clock}</strong>
+      </div>
+      <div className="timer-progress">
+        <div><span>Série {active + 1} de {order.length}</span><span>{Math.round(progress)}%</span></div>
+        <progress max="100" value={progress} aria-label={`Progresso da sessão: ${Math.round(progress)}%`} />
       </div>
     </div>
 
