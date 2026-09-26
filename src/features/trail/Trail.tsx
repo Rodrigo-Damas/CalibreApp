@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
-  addLocalDays,
   createTimelineDates,
   localDateString,
   tracks,
@@ -79,13 +78,6 @@ export function Trail() {
   const positioned = useRef(false);
   const today = localDateString();
   const dates = useMemo(() => createTimelineDates(today), [today]);
-  const frequency = useMemo(() => {
-    const startDate = addLocalDays(today, -13);
-    return Object.fromEntries(tracks.map((track) => [
-      track.id,
-      store.sessions.filter((session) => session.date >= startDate && session.date <= today && session.prescriptions.some((item) => item.track === track.id)).length,
-    ])) as Record<TrackId, number>;
-  }, [store.sessions, today]);
   const groups = useMemo(() => {
     const months: { key: string; label: string; weeks: { key: string; label: string; dates: string[] }[] }[] = [];
     for (const date of dates) {
@@ -117,12 +109,10 @@ export function Trail() {
   return <>
     <section className="trail-page" aria-busy={!store.hydrated}>
       <header className="timeline-header">
-        <div className="timeline-brand"><span>AGENDA DE TREINO</span><strong>Seu plano, no seu ritmo.</strong></div>
         <div className="track-headings" role="row" aria-label="Cabeçalhos fixos das trilhas">
           <div className="date-heading" role="columnheader">Data</div>
           {tracks.map((track) => <div role="columnheader" key={track.id} style={{ "--track": track.color } as CSSProperties}>
-            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><strong>{track.name}</strong><small>Iniciar</small></button>
-            <span className="frequency-bar" aria-label={`${frequency[track.id]} treinos nos últimos 14 dias`}><i style={{ width: `${Math.max(8, frequency[track.id] * 20)}%` }} /></span>
+            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><i aria-hidden="true" /><strong>{track.name}</strong></button>
           </div>)}
         </div>
       </header>
