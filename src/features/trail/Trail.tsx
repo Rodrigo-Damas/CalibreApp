@@ -11,7 +11,6 @@ import {
 } from "@/mocks/data";
 import { useMockStore } from "@/mocks/store";
 import { WorkoutFlow } from "@/features/workout/WorkoutFlow";
-import { TrackIcon } from "@/components/icons/TrackIcon";
 import { TimelineRow } from "./TimelineRow";
 
 const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" });
@@ -118,11 +117,11 @@ export function Trail() {
   return <>
     <section className="trail-page" aria-busy={!store.hydrated}>
       <header className="timeline-header">
-        <div className="timeline-brand">CALIBRE · JORNADA</div>
+        <div className="timeline-brand"><span>AGENDA DE TREINO</span><strong>Seu plano, no seu ritmo.</strong></div>
         <div className="track-headings" role="row" aria-label="Cabeçalhos fixos das trilhas">
           <div className="date-heading" role="columnheader">Data</div>
           {tracks.map((track) => <div role="columnheader" key={track.id} style={{ "--track": track.color } as CSSProperties}>
-            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><TrackIcon track={track.id} decorative /><strong>{track.name}</strong></button>
+            <button className="track-start" onClick={() => setTraining({ open: true, tracks: [track.id] })} aria-label={`Iniciar treino com ${track.name}`}><strong>{track.name}</strong><small>Iniciar</small></button>
             <span className="frequency-bar" aria-label={`${frequency[track.id]} treinos nos últimos 14 dias`}><i style={{ width: `${Math.max(8, frequency[track.id] * 20)}%` }} /></span>
           </div>)}
         </div>
