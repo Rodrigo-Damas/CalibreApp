@@ -127,7 +127,7 @@ export function Trail() {
           </section>)}
         </div>
       </div>
-      {!selected && !training && <button className="trail-workout-fab" onClick={() => setTraining(true)}><strong>Começar treino</strong><small>Selecionar treino</small></button>}
+      {!selected && !training && <button className="trail-workout-fab primary-button" onClick={() => setTraining(true)}>Começar treino</button>}
     </section>
     {selected && <SessionSheet session={selected} onClose={() => setSelected(null)} />}
     {training && <WorkoutFlow onClose={() => setTraining(false)} />}
