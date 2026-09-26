@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { ArrowLeft, X } from "lucide-react";
 import { tracks, localDateString, type DurationChoice, type Perception, type TrackId, type WorkoutFormat, type WorkoutSession } from "@/mocks/data";
 import { useMockStore } from "@/mocks/store";
@@ -13,6 +13,7 @@ import { WorkoutPulse } from "./WorkoutPulse";
 type Step = "tracks" | "build" | "running" | "pulse" | "done";
 
 export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose: () => void; initialTrack?: TrackId; initialTracks?: TrackId[] }) {
+  const title = useRef<HTMLHeadingElement>(null);
   const store = useMockStore();
   const startingTracks = initialTracks ?? (initialTrack ? [initialTrack] : []);
   const [step, setStep] = useState<Step>(startingTracks.length ? "build" : "tracks");
@@ -30,6 +31,10 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     const suggestion = recommendations[id].value;
     return makePrescription(id, track.exerciseKey, suggestion, chosen[id] ?? suggestion, duration);
   });
+
+  useEffect(() => {
+    title.current?.focus();
+  }, []);
 
   function toggle(id: TrackId) {
     setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : current.length < 4 ? [...current, id] : current);
@@ -65,7 +70,7 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
   return <div className={`workout-builder${step === "running" ? " timer-active" : ""}`} role="dialog" aria-modal="true" aria-label={step === "running" ? "Cronômetro" : "Montar treino"} data-reduced-motion={store.preferences.reducedMotion || undefined}>
     {step !== "running" && <header className="builder-header">
       <button className="builder-header__back" onClick={() => setStep("tracks")} aria-label="Voltar" disabled={step !== "build"}><ArrowLeft aria-hidden="true" /></button>
-      <div className="builder-header__title"><h1>Montar treino</h1><div className="builder-progress" aria-label={`Etapa ${stepNumber} de 2`}>{[1, 2].map((item) => <i key={item} className={item <= stepNumber ? "is-filled" : ""} />)}</div></div>
+      <div className="builder-header__title"><h1 ref={title} tabIndex={-1}>Montar treino</h1><div className="builder-progress" aria-label={`Etapa ${stepNumber} de 2`}>{[1, 2].map((item) => <i key={item} className={item <= stepNumber ? "is-filled" : ""} />)}</div></div>
       <button onClick={onClose} aria-label="Fechar"><X aria-hidden="true" /></button>
     </header>}
     <main>
