@@ -15,24 +15,16 @@ export async function playSignal(kind: SignalKind, preferences: SignalPreference
   if (!preferences.sound || !enabled) return;
   const audio = await audioContext();
   if (!audio) return;
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
   const at = audio.currentTime + .005;
-  const duration = kind === "prepare" ? .18 : .38;
-  const volume = Math.min(1, Math.max(0, preferences.volume));
-  const layers = kind === "prepare"
-    ? [{ frequency: 950, weight: .46, type: "sine" as OscillatorType }, { frequency: 1250, weight: .2, type: "sine" as OscillatorType }]
-    : [{ frequency: 1450, weight: .58, type: "triangle" as OscillatorType }, { frequency: 980, weight: .3, type: "sine" as OscillatorType }];
-
-  for (const layer of layers) {
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-    const peak = Math.max(.0001, volume * layer.weight);
-    oscillator.type = layer.type;
-    oscillator.frequency.setValueAtTime(layer.frequency, at);
-    gain.gain.setValueAtTime(.0001, at);
-    gain.gain.linearRampToValueAtTime(peak, at + .018);
-    gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
-    oscillator.connect(gain).connect(audio.destination);
-    oscillator.start(at);
-    oscillator.stop(at + duration);
-  }
+  const duration = kind === "prepare" ? .09 : .22;
+  const peak = Math.max(.0001, Math.min(1, Math.max(0, preferences.volume) * (kind === "prepare" ? .55 : .9)));
+  oscillator.type = kind === "prepare" ? "sine" : "triangle";
+  oscillator.frequency.setValueAtTime(kind === "prepare" ? 950 : 1450, at);
+  gain.gain.setValueAtTime(peak, at);
+  gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
+  oscillator.connect(gain).connect(audio.destination);
+  oscillator.start(at);
+  oscillator.stop(at + duration);
 }
