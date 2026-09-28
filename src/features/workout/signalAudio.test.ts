@@ -18,42 +18,60 @@ describe("signalAudio", () => {
     Object.defineProperty(navigator, "vibrate", { configurable: true, value: vi.fn() });
   });
 
-  it("toca prepare como um pip curto de 900 Hz e ganho menor", async () => {
+  it("toca prepare como um sinal curto, audível e de ganho menor", async () => {
     await enableSignalAudio();
     await playSignal("prepare", preferences);
 
     expect(audioContext.createOscillator).toHaveBeenCalledOnce();
     expect(audioContext.createGain).toHaveBeenCalledOnce();
-    expect(frequency.setValueAtTime).toHaveBeenCalledWith(900, 2.005);
+    expect(oscillator.type).toBe("sine");
+    expect(frequency.setValueAtTime).toHaveBeenCalledWith(950, 2.005);
     expect(frequency.linearRampToValueAtTime).not.toHaveBeenCalled();
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.08, 2.005);
-    expect(gainParam.exponentialRampToValueAtTime.mock.calls[0][1]).toBeCloseTo(2.055);
-    expect(oscillator.stop.mock.calls[0][0]).toBeCloseTo(2.055);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.275, 2.005);
+    expect(gainParam.exponentialRampToValueAtTime.mock.calls[0][1]).toBeCloseTo(2.095);
+    expect(oscillator.stop.mock.calls[0][0]).toBeCloseTo(2.095);
   });
 
-  it("toca command como um único bip de 1400 Hz, mais longo e mais forte", async () => {
+  it("toca command com timbre distinto, mais longo e mais forte", async () => {
     await enableSignalAudio();
     await playSignal("command", preferences);
 
     expect(audioContext.createOscillator).toHaveBeenCalledOnce();
     expect(audioContext.createGain).toHaveBeenCalledOnce();
-    expect(frequency.setValueAtTime).toHaveBeenCalledWith(1400, 2.005);
+    expect(oscillator.type).toBe("triangle");
+    expect(frequency.setValueAtTime).toHaveBeenCalledWith(1450, 2.005);
     expect(frequency.linearRampToValueAtTime).not.toHaveBeenCalled();
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.16, 2.005);
-    expect(gainParam.exponentialRampToValueAtTime).toHaveBeenCalledWith(.0001, 2.185);
-    expect(oscillator.stop).toHaveBeenCalledWith(2.185);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.45, 2.005);
+    expect(gainParam.exponentialRampToValueAtTime).toHaveBeenCalledWith(.0001, 2.225);
+    expect(oscillator.stop).toHaveBeenCalledWith(2.225);
   });
 
   it("calcula o ganho usando o volume configurado", async () => {
     await enableSignalAudio();
     await playSignal("command", { ...preferences, volume: .25 });
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.08, 2.005);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.225, 2.005);
   });
 
   it("limita volumes altos a um ganho seguro", async () => {
     await enableSignalAudio();
     await playSignal("command", { ...preferences, volume: 10 });
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.32, 2.005);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(1, 2.005);
+    await playSignal("prepare", { ...preferences, volume: 10 });
+    expect(gainParam.setValueAtTime).toHaveBeenLastCalledWith(1, 2.005);
+  });
+
+  it("nunca ultrapassa o ganho 1 e progride com o volume", async () => {
+    await enableSignalAudio();
+    await playSignal("command", { ...preferences, volume: .2 });
+    const low = gainParam.setValueAtTime.mock.calls.at(-1)?.[0];
+    await playSignal("command", { ...preferences, volume: .8 });
+    const high = gainParam.setValueAtTime.mock.calls.at(-1)?.[0];
+    await playSignal("command", { ...preferences, volume: 100 });
+    const limited = gainParam.setValueAtTime.mock.calls.at(-1)?.[0];
+    expect(low).toBeCloseTo(.18);
+    expect(high).toBeCloseTo(.72);
+    expect(high).toBeGreaterThan(low);
+    expect(limited).toBe(1);
   });
 
   it("não cria nós de áudio quando o som está desligado", async () => {

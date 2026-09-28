@@ -1,7 +1,7 @@
 "use client";
 import{createContext,useContext,useEffect,useMemo,useState}from"react";import{demoSessions,tracks,type WorkoutSession}from"./data";
 export type Preferences={sound:boolean;volume:number;vibration:boolean;reducedMotion:boolean};
-const defaults:Preferences={sound:true,volume:.45,vibration:true,reducedMotion:false},key="calibre-state-v2";
+const defaults:Preferences={sound:true,volume:.65,vibration:true,reducedMotion:false},key="calibre-state-v2";
 type State={sessions:WorkoutSession[];preferences:Preferences};type Store=State&{hydrated:boolean;completeSession:(s:WorkoutSession)=>void;updatePreferences:(p:Partial<Preferences>)=>void;clearData:()=>void;completed:number;minutes:number;repetitions:number;streak:number};
 type LegacyPrescription={track:WorkoutSession["prescriptions"][number]["track"];exerciseKey:WorkoutSession["prescriptions"][number]["exerciseKey"];repsPerSet?:number;chosenShortReps?:number;displayedReps?:number;sets:5|10;totalVolume?:number;estimatedVolume?:number};
 type StoredSession=Omit<WorkoutSession,"prescriptions">&{prescriptions:LegacyPrescription[]};
