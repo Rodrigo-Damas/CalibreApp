@@ -1,7 +1,21 @@
 export type SignalKind = "prepare" | "command";
 export type SignalPreferences = { sound: boolean; volume: number; vibration: boolean };
+const countdownUrl = "/audio/workout/mixkit-clock-countdown-bleeps-916.wav";
 let context: AudioContext | null = null;
+let countdown: HTMLAudioElement | null = null;
+let countdownPlaying = false;
 let enabled = false;
+
+function countdownAudio() {
+  if (!countdown) {
+    countdown = new Audio(countdownUrl);
+    countdown.preload = "auto";
+    countdown.addEventListener("ended", () => { countdownPlaying = false; });
+    countdown.load();
+  }
+  return countdown;
+}
+
 async function audioContext() {
   const AudioContextConstructor = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextConstructor) return null;
@@ -9,7 +23,30 @@ async function audioContext() {
   if (context.state === "suspended") await context.resume();
   return context;
 }
-export async function enableSignalAudio() { enabled = true; return audioContext(); }
+export async function enableSignalAudio() {
+  enabled = true;
+  countdownAudio();
+  return audioContext();
+}
+
+/** Starts the reusable recorded five-second countdown, optionally already in progress. */
+export async function playCountdownSignal(preferences: SignalPreferences, offsetSeconds = 0) {
+  if (!preferences.sound || !enabled || countdownPlaying) return;
+  const audio = countdownAudio();
+  audio.volume = Math.max(0, Math.min(1, preferences.volume));
+  audio.currentTime = Math.max(0, offsetSeconds);
+  countdownPlaying = true;
+  await audio.play().catch(() => { countdownPlaying = false; });
+}
+
+/** Stops a countdown so pause, restart and finish cannot leave stale audio playing. */
+export function cancelCountdownSignal() {
+  if (!countdown) return;
+  countdown.pause();
+  countdown.currentTime = 0;
+  countdownPlaying = false;
+}
+
 export async function playSignal(kind: SignalKind, preferences: SignalPreferences) {
   if (preferences.vibration && "vibrate" in navigator) navigator.vibrate(kind === "prepare" ? 18 : 45);
   if (!preferences.sound || !enabled) return;
