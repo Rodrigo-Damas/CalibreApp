@@ -4,7 +4,7 @@ import { ArrowLeft, Pause, Play, RotateCcw, Square, Volume2, VolumeX } from "luc
 import { useEffect, useRef, useState } from "react";
 import { tracks, type SessionPrescription, type WorkoutFormat } from "@/mocks/data";
 import { sequence } from "./recommendationEngine";
-import { enableSignalAudio, playSignal, type SignalPreferences } from "./signalAudio";
+import { cancelCountdownSignal, enableSignalAudio, playCountdownSignal, playSignal, type SignalPreferences } from "./signalAudio";
 
 type Props = {
   prescriptions?: SessionPrescription[];
@@ -31,7 +31,7 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
   const started = useRef(0);
   const offset = useRef(0);
   const currentSecond = useRef(-10);
-  const emitted = useRef(new Set<number>());
+  const countdowns = useRef(new Set<number>());
   const done = useRef(false);
   const preferencesRef = useRef(preferences);
   const finishRef = useRef(onFinish);
@@ -43,22 +43,20 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
     const tick = () => {
       const now = (offset.current + Date.now() - started.current) / 1000 - 10;
       const whole = Math.floor(now);
-      for (let second = currentSecond.current + 1; second <= Math.min(whole, total - 1); second++) {
-        if (emitted.current.has(second)) continue;
-        const within = ((second % 60) + 60) % 60;
-        const inFinalRound = second >= total - 60;
-        const attention = (second >= -5 && second <= -2) || (second >= 0 && within >= 55 && within <= 58);
-        const command = second === -1 || (!inFinalRound && second > 0 && within === 59);
-        if (attention || command) {
-          emitted.current.add(second);
-          void playSignal(command ? "command" : "prepare", preferencesRef.current);
-        }
+      const first = currentSecond.current + 1;
+      for (let countdownAt = -5; countdownAt < total; countdownAt += 60) {
+        if (countdownAt < first || countdownAt > whole || countdowns.current.has(countdownAt)) continue;
+        const audioOffset = whole - countdownAt;
+        countdowns.current.add(countdownAt);
+        // A background tab may skip the entire countdown. Never start stale audio.
+        if (audioOffset < 5) void playCountdownSignal(preferencesRef.current, audioOffset);
       }
       currentSecond.current = Math.max(currentSecond.current, whole);
       setElapsed(Math.min(total, now));
       if (now >= total && !done.current) {
         done.current = true;
         setRunning(false);
+        cancelCountdownSignal();
         void playSignal("command", preferencesRef.current);
         finishRef.current(total);
       }
@@ -74,14 +72,15 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
     updatePreferences?.(change);
   }
   async function start() { await enableSignalAudio(); started.current = Date.now(); setRunning(true); setPaused(false); }
-  function pause() { offset.current += Date.now() - started.current; setPaused(true); setRunning(false); }
+  function pause() { offset.current += Date.now() - started.current; cancelCountdownSignal(); setPaused(true); setRunning(false); }
   async function resume() { await enableSignalAudio(); started.current = Date.now(); setRunning(true); setPaused(false); }
   async function restart() {
     await enableSignalAudio();
+    cancelCountdownSignal();
     setElapsed(-10);
     currentSecond.current = -10;
     offset.current = 0;
-    emitted.current.clear();
+    countdowns.current.clear();
     done.current = false;
     started.current = Date.now();
     setRunning(true);
@@ -91,8 +90,8 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
   const active = Math.min(order.length - 1, Math.max(0, Math.floor(Math.max(0, elapsed) / 60)));
   const within = Math.max(0, Math.floor(elapsed) % 60);
   const remaining = elapsed < 0 ? Math.ceil(-elapsed) : 60 - within;
-  const attention = (elapsed < 0 && remaining <= 5 && remaining >= 2) || (active < order.length - 1 && elapsed >= 0 && remaining <= 5 && remaining >= 2);
-  const command = remaining === 1 && (elapsed < 0 || active < order.length - 1);
+  const attention = remaining <= 5 && remaining >= 2;
+  const command = remaining === 1;
   const timerState = paused ? "paused" : command ? "command" : attention ? "attention" : elapsed < 0 ? "preparing" : "running";
   const clock = `${String(Math.floor(remaining / 60)).padStart(2, "0")}:${String(remaining % 60).padStart(2, "0")}`;
   const current = order[active];
@@ -124,11 +123,11 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
       {!running && elapsed === -10 && <button className="timer-start" type="button" onClick={start}><Play aria-hidden="true" /> Iniciar</button>}
       {running && <button type="button" onClick={pause}><Pause aria-hidden="true" /><span>Pausar</span></button>}
       {paused && <><button type="button" onClick={resume}><Play aria-hidden="true" /><span>Continuar</span></button><button type="button" onClick={restart}><RotateCcw aria-hidden="true" /><span>Reiniciar</span></button></>}
-      <button type="button" aria-pressed={settings.sound} onClick={() => changePreferences({ sound: !settings.sound })}>{settings.sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}<span>{settings.sound ? "Áudio ligado" : "Áudio desligado"}</span></button>
+      <button type="button" aria-pressed={settings.sound} onClick={() => { if (settings.sound) cancelCountdownSignal(); changePreferences({ sound: !settings.sound }); }}>{settings.sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}<span>{settings.sound ? "Áudio ligado" : "Áudio desligado"}</span></button>
       <button type="button" onClick={() => setConfirm(true)}><Square aria-hidden="true" /><span>Encerrar</span></button>
     </div>
 
-    {confirm && <div className="timer-confirm" role="alertdialog" aria-modal="true" aria-label="Confirmar interrupção"><p>Ao encerrar, o treino ficará marcado como interrompido e nenhum volume será estimado.</p><div><button onClick={() => setConfirm(false)}>Continuar treino</button><button onClick={() => onInterrupt?.(Math.max(0, Math.floor(elapsed)))}>Marcar como interrompido</button></div></div>}
+    {confirm && <div className="timer-confirm" role="alertdialog" aria-modal="true" aria-label="Confirmar interrupção"><p>Ao encerrar, o treino ficará marcado como interrompido e nenhum volume será estimado.</p><div><button onClick={() => setConfirm(false)}>Continuar treino</button><button onClick={() => { cancelCountdownSignal(); onInterrupt?.(Math.max(0, Math.floor(elapsed))); }}>Marcar como interrompido</button></div></div>}
   </section>;
 }
 

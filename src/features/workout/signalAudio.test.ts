@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { enableSignalAudio, playSignal } from "./signalAudio";
+import { cancelCountdownSignal, enableSignalAudio, playCountdownSignal, playSignal } from "./signalAudio";
 
 const frequency = { setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
 const gainParam = { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() };
@@ -8,6 +8,16 @@ const gain = { gain: gainParam, connect: vi.fn() };
 const audioContext = { currentTime: 2, state: "running", destination: {}, createOscillator: vi.fn(() => oscillator), createGain: vi.fn(() => gain), resume: vi.fn() };
 
 const preferences = { sound: true, volume: .5, vibration: false };
+const media = {
+  addEventListener: vi.fn(),
+  currentTime: 99,
+  load: vi.fn(),
+  pause: vi.fn(),
+  play: vi.fn(() => Promise.resolve()),
+  preload: "",
+  volume: 1,
+};
+const AudioMock = vi.fn(() => media);
 
 describe("signalAudio", () => {
   beforeEach(() => {
@@ -16,12 +26,17 @@ describe("signalAudio", () => {
     gain.connect.mockReturnValue(audioContext.destination);
     Object.defineProperty(window, "AudioContext", { configurable: true, value: vi.fn(() => audioContext) });
     Object.defineProperty(navigator, "vibrate", { configurable: true, value: vi.fn() });
+    vi.stubGlobal("Audio", AudioMock);
+    cancelCountdownSignal();
   });
 
   it("toca prepare como um sinal curto, audível e de ganho menor", async () => {
     await enableSignalAudio();
     await playSignal("prepare", preferences);
 
+    expect(AudioMock).toHaveBeenCalledWith("/audio/workout/mixkit-clock-countdown-bleeps-916.wav");
+    expect(media.preload).toBe("auto");
+    expect(media.load).toHaveBeenCalledOnce();
     expect(audioContext.createOscillator).toHaveBeenCalledOnce();
     expect(audioContext.createGain).toHaveBeenCalledOnce();
     expect(oscillator.type).toBe("sine");
@@ -81,5 +96,33 @@ describe("signalAudio", () => {
     await playSignal("command", { sound: false, volume: .5, vibration: false });
     expect(audioContext.createOscillator).not.toHaveBeenCalled();
     expect(audioContext.createGain).not.toHaveBeenCalled();
+  });
+
+  it("reutiliza o arquivo de contagem após a habilitação", async () => {
+    await enableSignalAudio();
+    await playCountdownSignal(preferences);
+    await playCountdownSignal(preferences);
+
+    expect(media.preload).toBe("auto");
+    expect(media.volume).toBe(.5);
+    expect(media.currentTime).toBe(0);
+    expect(media.play).toHaveBeenCalledOnce();
+  });
+
+  it("respeita som, volume e deslocamento e permite tocar novamente após cancelar", async () => {
+    await enableSignalAudio();
+    await playCountdownSignal({ ...preferences, sound: false }, 2);
+    expect(media.play).not.toHaveBeenCalled();
+
+    await playCountdownSignal({ ...preferences, volume: 4 }, 2);
+    expect(media.volume).toBe(1);
+    expect(media.currentTime).toBe(2);
+    expect(media.play).toHaveBeenCalledOnce();
+
+    cancelCountdownSignal();
+    expect(media.pause).toHaveBeenCalled();
+    expect(media.currentTime).toBe(0);
+    await playCountdownSignal(preferences);
+    expect(media.play).toHaveBeenCalledTimes(2);
   });
 });
