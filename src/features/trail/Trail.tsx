@@ -123,8 +123,9 @@ export function Trail() {
           </div>)}
         </div>
       </header>
+      <p className="sr-only" id="timeline-instructions">Role horizontalmente para acessar todas as trilhas e ative uma sessão para abrir os detalhes.</p>
       <div className="calendar-scroll" ref={calendar}>
-        <div className="timeline" role="table" aria-label="Histórico de treinos" aria-colcount={5}>
+        <div className="timeline" role="table" aria-label="Histórico de treinos" aria-describedby="timeline-instructions" aria-colcount={5}>
           {groups.map((month) => <section className="month-group" role="rowgroup" aria-labelledby={`month-${month.key}`} key={month.key}>
             <h2 className="month-separator" id={`month-${month.key}`}>{month.label}</h2>
             {month.weeks.map((week) => <section className="week-group" role="rowgroup" aria-labelledby={`week-${month.key}-${week.key}`} key={`${month.key}-${week.key}`}>

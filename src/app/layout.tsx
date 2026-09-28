@@ -9,5 +9,5 @@ const geist = localFont({
   weight: "100 900",
 });
 
-export const metadata:Metadata={title:"Calibre — Seu treino, seu ritmo",description:"Protótipo responsivo para acompanhamento de treinos"};
+export const metadata:Metadata={title:"Calibre: seu treino, seu ritmo",description:"Protótipo responsivo para acompanhamento de treinos"};
 export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="pt-BR" className={geist.variable}><body>{children}</body></html>}
