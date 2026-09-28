@@ -47,11 +47,11 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
         if (emitted.current.has(second)) continue;
         const within = ((second % 60) + 60) % 60;
         const inFinalRound = second >= total - 60;
-        const attention = (second >= -5 && second <= -2) || (!inFinalRound && second >= 0 && within >= 55 && within <= 58);
+        const attention = (second >= -5 && second <= -2) || (second >= 0 && within >= 55 && within <= 58);
         const command = second === -1 || (!inFinalRound && second > 0 && within === 59);
         if (attention || command) {
           emitted.current.add(second);
-          void playSignal(command ? "start" : "prepare", preferencesRef.current);
+          void playSignal(command ? "command" : "prepare", preferencesRef.current);
         }
       }
       currentSecond.current = Math.max(currentSecond.current, whole);
@@ -59,7 +59,7 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
       if (now >= total && !done.current) {
         done.current = true;
         setRunning(false);
-        void playSignal("finish", preferencesRef.current);
+        void playSignal("command", preferencesRef.current);
         finishRef.current(total);
       }
     };
