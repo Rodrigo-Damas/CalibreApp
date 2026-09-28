@@ -11,7 +11,7 @@ export function TrackSelector({ selected, onToggle, repeated = [] }: { selected:
       <span className="track-selector__check">{order > 0 ? <b aria-label={`Selecionada na posição ${order}`}>{order}</b> : <Check aria-hidden="true" />}</span>
       <span className="track-selector__hierarchy"><strong>{track.name}</strong><small>Trilha</small></span>
       <span className="track-selector__exercise"><small>Exercício</small><strong>{track.exercise}</strong></span>
-      {repeated.includes(track.id) && <span className="track-selector__repeat">Treinada hoje</span>}
+      {repeated.includes(track.id) && <span className="track-selector__repeat">Treino feito hoje</span>}
     </button>;
   })}</div>;
 }

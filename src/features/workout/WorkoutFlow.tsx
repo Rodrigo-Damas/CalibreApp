@@ -17,6 +17,7 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
   const title = useRef<HTMLHeadingElement>(null);
   const startButton = useRef<HTMLButtonElement>(null);
   const confirmButton = useRef<HTMLButtonElement>(null);
+  const confirmation = useRef<HTMLElement>(null);
   const store = useMockStore();
   const startingTracks = initialTracks ?? (initialTrack ? [initialTrack] : []);
   const [step, setStep] = useState<Step>(startingTracks.length ? "build" : "tracks");
@@ -39,7 +40,18 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
   useEffect(() => {
     if (!confirming) return;
     confirmButton.current?.focus();
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") closeConfirmation(); };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeConfirmation();
+      if (event.key !== "Tab" || !confirmation.current) return;
+      const focusable = [...confirmation.current.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    };
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
   }, [confirming]);
@@ -65,8 +77,8 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     const wins = finished.prescriptions.flatMap<Milestone>((dose) => {
       const track = tracks.find((item) => item.id === dose.track)!;
       const result = compareCompletedPerformance(dose.track, dose, store.sessions);
-      if (result.state === "personal-record") return [{ state: result.state, text: `Novo recorde pessoal em ${track.name} — ${track.exercise}: ${result.currentVolume} repetições.` }];
-      if (result.state === "increase") return [{ state: result.state, text: `Volume maior que o último treino em ${track.name} — ${track.exercise}: ${result.currentVolume} repetições.` }];
+      if (result.state === "personal-record") return [{ state: result.state, text: `Novo recorde pessoal em ${track.name}: ${track.exercise}: ${result.currentVolume} repetições.` }];
+      if (result.state === "increase") return [{ state: result.state, text: `Volume maior que o último treino em ${track.name}: ${track.exercise}: ${result.currentVolume} repetições.` }];
       return [];
     });
     store.completeSession(finished);
@@ -79,7 +91,7 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
   return <div className={`workout-builder${step === "running" ? " timer-active" : ""}`} role="dialog" aria-modal="true" aria-label={step === "running" ? "Cronômetro" : "Montar treino"} data-reduced-motion={store.preferences.reducedMotion || undefined}>
     {step !== "running" && <header className="builder-header"><button className="builder-header__back" onClick={() => setStep("tracks")} aria-label="Voltar" disabled={step !== "build"}><ArrowLeft aria-hidden="true" /></button><div className="builder-header__title"><h1 ref={title} tabIndex={-1}>Montar treino</h1><div className="builder-progress" aria-label={`Etapa ${stepNumber} de 2`}>{[1, 2].map((item) => <i key={item} className={item <= stepNumber ? "is-filled" : ""} />)}</div></div><button onClick={onClose} aria-label="Fechar"><X aria-hidden="true" /></button></header>}
     <main>
-      {step === "tracks" && <section className="builder-step"><p className="step-label">Etapa 1 de 2</p><h2>Escolha as trilhas</h2><p>A ordem de seleção define a ordem do treino.</p><TrackSelector selected={selected} onToggle={toggle} repeated={repeated} />{selected.length > 1 && <aside className="selected-preview"><strong>Esta sessão terá:</strong>{selected.map((id, index) => { const track = tracks.find((item) => item.id === id)!; return <span key={id}>{index + 1}. {track.name} — {track.exercise}</span>; })}</aside>}{selected.some((item) => repeated.includes(item)) && <aside className="recovery-note">Treinada hoje. Você pode fazer outra sessão.</aside>}<button className="primary-button" disabled={!selected.length} onClick={() => setStep("build")}>Continuar</button></section>}
+      {step === "tracks" && <section className="builder-step"><p className="step-label">Etapa 1 de 2</p><h2>Escolha as trilhas</h2><p>A ordem de seleção define a ordem do treino.</p><TrackSelector selected={selected} onToggle={toggle} repeated={repeated} />{selected.length > 1 && <aside className="selected-preview"><strong>Esta sessão terá:</strong>{selected.map((id, index) => { const track = tracks.find((item) => item.id === id)!; return <span key={id}>{index + 1}. {track.name}: {track.exercise}</span>; })}</aside>}{selected.some((item) => repeated.includes(item)) && <aside className="recovery-note">Treino feito hoje. Você pode fazer outra sessão.</aside>}<button className="primary-button" disabled={!selected.length} onClick={() => setStep("build")}>Continuar</button></section>}
       {step === "build" && <section className="builder-step build-sheet"><header><p className="step-label">Seu treino</p><h2>{selected.map((id) => tracks.find((track) => track.id === id)!.name).join(" · ")}</h2></header>
         <section className="build-section" aria-labelledby="duration-title"><h3 id="duration-title">Defina a duração</h3><div className="duration-segmented" role="group" aria-label="Duração do treino">{(["short", "long"] as DurationChoice[]).map((choice) => <button key={choice} aria-pressed={duration === choice} onClick={() => setDuration(choice)}><strong>{choice === "short" ? "Curto" : "Longo"}</strong><small>{SETS[choice]} séries por trilha</small></button>)}</div></section>
         {selected.length > 1 && <section className="build-section"><h3>Escolha o formato</h3><div className="format-segmented" role="group" aria-label="Formato do treino"><button aria-pressed={format === "blocks"} onClick={() => setFormat("blocks")}><strong>Blocos</strong><span>Uma trilha por vez</span></button><button aria-pressed={format === "circuit"} onClick={() => setFormat("circuit")}><strong>Circuito</strong><span>Alternar exercícios</span></button></div></section>}
@@ -91,6 +103,6 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
       {step === "pulse" && <WorkoutPulse onConfirm={complete} />}
       {step === "done" && pending && <section className="builder-step completion-step"><h2>Treino concluído</h2><dl><div><dt>Duração</dt><dd>{pending.plannedMinutes} min</dd></div><div><dt>Trilhas</dt><dd>{pending.prescriptions.map((item) => tracks.find((track) => track.id === item.track)!.name).join(", ")}</dd></div><div><dt>Volume total executado</dt><dd>{pending.prescriptions.reduce((sum, item) => sum + item.totalVolume, 0)} repetições</dd></div></dl>{milestones.length > 0 && <ul className="milestone-list">{milestones.map((milestone) => <li className={`is-${milestone.state}`} key={milestone.text}><strong>{milestone.state === "personal-record" ? "Recorde pessoal" : "Aumento"}</strong>{milestone.text}</li>)}</ul>}<button className="primary-button" onClick={onClose}>Voltar para a agenda</button></section>}
     </main>
-    {confirming && <div className="preworkout-backdrop"><section className="preworkout-confirm" role="dialog" aria-modal="true" aria-labelledby="ready-title" aria-describedby="ready-description"><h2 id="ready-title">Você está preparada?</h2><p id="ready-description">Confira a sessão antes de iniciar o cronômetro.</p><p><strong>{format === "blocks" ? "Formato em blocos" : "Formato em circuito"}</strong></p><ol>{prescriptions.map((item, index) => { const track = tracks.find((entry) => entry.id === item.track)!; return <li key={item.track}><strong>{index + 1}. {track.name} — {track.exercise}</strong><span>{item.sets} séries · {item.repsPerSet} repetições por série</span></li>; })}</ol><div><button onClick={closeConfirmation}>Ainda não</button><button ref={confirmButton} className="primary-button" onClick={begin}>Sim, iniciar cronômetro</button></div></section></div>}
+    {confirming && <div className="preworkout-backdrop"><section ref={confirmation} className="preworkout-confirm" role="dialog" aria-modal="true" aria-labelledby="ready-title"><h2 id="ready-title">Tudo pronto?</h2><dl><div><dt>Duração</dt><dd>{selected.length * SETS[duration]} minutos</dd></div><div><dt>Exercícios</dt><dd>{prescriptions.length}</dd></div><div><dt>Formato</dt><dd>{format === "blocks" ? "Blocos" : "Circuito"}</dd></div></dl><div><button onClick={closeConfirmation}>Voltar e ajustar</button><button ref={confirmButton} className="primary-button" onClick={begin}>Iniciar cronômetro</button></div></section></div>}
   </div>;
 }

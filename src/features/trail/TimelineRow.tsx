@@ -27,7 +27,7 @@ export function TimelineRow({ date, sessions, onSelect }: {
     {tracks.map((track) => {
       const list = sessions.filter((session) => session.prescriptions.some((item) => item.track === track.id)).sort((a, b) => a.time.localeCompare(b.time));
       const visible = expanded === track.id ? list : list.slice(0, 2);
-      return <div className="track-slot" role="cell" key={track.id} aria-label={`${track.name}: ${list.length} sessões`}>
+      return <div className={`track-slot${list.length ? " has-sessions" : ""}`} role="cell" key={track.id} aria-label={`${track.name}: ${list.length} sessões`}>
         <div className="node-group">{visible.map((session) => <WorkoutNode key={`${session.id}-${track.id}`} session={session} prescription={session.prescriptions.find((item) => item.track === track.id)!} onSelect={onSelect} />)}</div>
         {list.length > 2 && <button className="expand-nodes" onClick={() => setExpanded(expanded === track.id ? null : track.id)} aria-expanded={expanded === track.id}>{expanded === track.id ? "Recolher" : `+${list.length - 2}`}</button>}
       </div>;

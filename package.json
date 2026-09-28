@@ -6,8 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "test": "vitest run"
+    "lint": "npm run check:ui-language && eslint .",
+    "test": "vitest run",
+    "check:ui-language": "node scripts/check-ui-language.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
