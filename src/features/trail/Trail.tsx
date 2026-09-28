@@ -136,7 +136,7 @@ export function Trail() {
         </div>
       </div>
     </section>
-    {!selected && !training && <div className="trail-workout-fab-layer"><button ref={workoutButton} type="button" className="trail-workout-fab primary-button" aria-label="Começar treino" onClick={() => setTraining(true)}>Começar treino</button></div>}
+    {!selected && !training && <div className="trail-workout-fab-layer"><button ref={workoutButton} type="button" className="trail-workout-fab primary-button" aria-label="Montar treino" onClick={() => setTraining(true)}>Montar treino</button></div>}
     {selected && <SessionSheet session={selected} onClose={() => setSelected(null)} />}
     {training && <WorkoutFlow onClose={() => setTraining(false)} />}
   </>;
