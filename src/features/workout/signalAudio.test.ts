@@ -26,7 +26,7 @@ describe("signalAudio", () => {
     expect(audioContext.createGain).toHaveBeenCalledOnce();
     expect(frequency.setValueAtTime).toHaveBeenCalledWith(900, 2.005);
     expect(frequency.linearRampToValueAtTime).not.toHaveBeenCalled();
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.06, 2.005);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.08, 2.005);
     expect(gainParam.exponentialRampToValueAtTime.mock.calls[0][1]).toBeCloseTo(2.055);
     expect(oscillator.stop.mock.calls[0][0]).toBeCloseTo(2.055);
   });
@@ -39,7 +39,7 @@ describe("signalAudio", () => {
     expect(audioContext.createGain).toHaveBeenCalledOnce();
     expect(frequency.setValueAtTime).toHaveBeenCalledWith(1400, 2.005);
     expect(frequency.linearRampToValueAtTime).not.toHaveBeenCalled();
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.12, 2.005);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.16, 2.005);
     expect(gainParam.exponentialRampToValueAtTime).toHaveBeenCalledWith(.0001, 2.185);
     expect(oscillator.stop).toHaveBeenCalledWith(2.185);
   });
@@ -47,7 +47,13 @@ describe("signalAudio", () => {
   it("calcula o ganho usando o volume configurado", async () => {
     await enableSignalAudio();
     await playSignal("command", { ...preferences, volume: .25 });
-    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.06, 2.005);
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.08, 2.005);
+  });
+
+  it("limita volumes altos a um ganho seguro", async () => {
+    await enableSignalAudio();
+    await playSignal("command", { ...preferences, volume: 10 });
+    expect(gainParam.setValueAtTime).toHaveBeenCalledWith(.32, 2.005);
   });
 
   it("não cria nós de áudio quando o som está desligado", async () => {

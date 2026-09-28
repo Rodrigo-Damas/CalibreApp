@@ -19,7 +19,7 @@ export async function playSignal(kind: SignalKind, preferences: SignalPreference
   const gain = audio.createGain();
   const at = audio.currentTime + .005;
   const duration = kind === "prepare" ? .05 : .18;
-  const peak = Math.max(.0001, Math.min(1, preferences.volume) * (kind === "prepare" ? .12 : .24));
+  const peak = Math.max(.0001, Math.min(1, preferences.volume) * (kind === "prepare" ? .16 : .32));
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(kind === "prepare" ? 900 : 1400, at);
   gain.gain.setValueAtTime(peak, at);
