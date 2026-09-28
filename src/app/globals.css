@@ -228,3 +228,30 @@ h1, h2, h3, h4 { font-weight: 650; }
 
 /* Decorative layers never block controls rendered above the agenda. */
 .connection-lines, .trail-page::before, .trail-page::after, .timeline::before, .timeline::after, .calendar-scroll::before, .calendar-scroll::after { pointer-events: none; }
+
+/* Workout planning hierarchy and confirmation */
+.track-selector button { gap: var(--space-2); min-height: 7rem; border-left: 4px solid var(--track); }
+.track-selector button[aria-pressed="true"] { border-color: var(--track); box-shadow: 0 0 0 2px color-mix(in srgb, var(--track) 30%, transparent); }
+.track-selector__hierarchy, .track-selector__exercise { position: relative; z-index: 1; display: flex; flex-direction: column; }
+.track-selector__hierarchy strong { color: var(--track); font-size: var(--font-size-section); }
+.track-selector__hierarchy small, .track-selector__exercise small { order: -1; color: var(--color-text-secondary); font-size: var(--font-size-meta); text-transform: uppercase; }
+.track-selector__exercise strong { font-size: var(--font-size-label); }
+.track-selector__check b { font-size: var(--font-size-body); }
+.selected-preview { display: grid; gap: var(--space-1); padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-surface); }
+.selected-preview span { color: var(--color-text-secondary); }
+.dose-control strong small { display: block; font-size: var(--font-size-meta); font-weight: 500; }
+.build-summary { gap: var(--space-5); }
+.workout-sequence h3 { margin-bottom: var(--space-3); }
+.sequence-groups, .sequence-rounds, .sequence-rounds ol { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.sequence-groups > li, .sequence-rounds > li { display: grid; gap: var(--space-1); padding: var(--space-3); border-left: 3px solid var(--color-accent); border-radius: var(--radius-sm); background: var(--color-surface-raised); }
+.sequence-groups span, .sequence-rounds ol { color: var(--color-text-secondary); font-size: var(--font-size-label); }
+.secondary-summary { display: grid; gap: var(--space-1); padding-top: var(--space-4); border-top: 1px solid var(--color-border-subtle); }
+.secondary-summary span { color: var(--color-text-secondary); font-size: var(--font-size-label); }
+.preworkout-backdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: var(--space-4); background: color-mix(in srgb, #000 65%, transparent); }
+.preworkout-confirm { width: min(34rem, 100%); max-height: 90vh; overflow: auto; padding: var(--space-6); border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: var(--shadow-lg); }
+.preworkout-confirm > ol { display: grid; gap: var(--space-2); padding-left: var(--space-5); }
+.preworkout-confirm li span { display: block; color: var(--color-text-secondary); font-size: var(--font-size-label); }
+.preworkout-confirm > div { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-5); }
+.milestone-list { display: grid; gap: var(--space-3); padding: 0; list-style: none; }
+.milestone-list li { display: grid; gap: var(--space-1); padding: var(--space-4); border-left: 4px solid var(--color-accent); background: var(--color-accent-soft); }
+.milestone-list .is-personal-record { border-left-color: var(--color-warning); }

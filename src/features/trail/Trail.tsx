@@ -26,7 +26,7 @@ const weekStart = (date: string) => {
 
 function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: () => void }) {
   const dialog = useRef<HTMLElement>(null);
-  const volume = session.prescriptions.reduce((total, item) => total + (item.estimatedVolume || 0), 0);
+  const volume = session.prescriptions.reduce((total, item) => total + (item.totalVolume || 0), 0);
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -59,10 +59,10 @@ function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: 
         <h2 id="session-title">{session.prescriptions.length > 1 ? "Sessão combinada" : "Sessão individual"}</h2>
         <dl>
           <div><dt>Tempo em atividade</dt><dd>{Math.floor(session.elapsedSeconds / 60)} min {session.elapsedSeconds % 60}s</dd></div>
-          <div><dt>Volume estimado total</dt><dd>{session.status === "interrupted" ? "Não estimado" : volume}</dd></div>
+          <div><dt>Volume total executado</dt><dd>{session.status === "interrupted" ? "Não concluído" : volume}</dd></div>
           {session.prescriptions.map((prescription) => {
             const track = tracks.find((item) => item.id === prescription.track)!;
-            return <div key={prescription.track}><dt>{track.name}</dt><dd>{session.status === "interrupted" ? "Interrompido" : `${prescription.sets} min · ${prescription.estimatedVolume} estimados`}</dd></div>;
+            return <div key={prescription.track}><dt>{track.name}</dt><dd>{session.status === "interrupted" ? "Interrompido" : `${prescription.sets} séries · ${prescription.repsPerSet} por série · ${prescription.totalVolume} executadas`}</dd></div>;
           })}
         </dl>
       </section>

@@ -20,7 +20,7 @@ type Props = {
 const defaultPreferences = { sound: true, volume: .45, vibration: true };
 
 export function WorkoutTimer({ prescriptions, format = "blocks", preferences = defaultPreferences, updatePreferences, reps, onFinish, onInterrupt }: Props) {
-  const doses: SessionPrescription[] = prescriptions?.length ? prescriptions : [{ track: "push", exerciseKey: "floor-push-up", suggestedShortReps: reps || 1, chosenShortReps: reps || 1, displayedReps: reps || 1, sets: 5, estimatedVolume: (reps || 1) * 5 }];
+  const doses: SessionPrescription[] = prescriptions?.length ? prescriptions : [{ track: "push", exerciseKey: "floor-push-up", repsPerSet: reps || 1, sets: 5, totalVolume: (reps || 1) * 5 }];
   const order = sequence(doses, doses[0].sets, format);
   const total = order.length * 60;
   const [elapsed, setElapsed] = useState(-10);
@@ -98,7 +98,7 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
       <div className="timer-exercise">
         <span>{currentTrack.name}</span>
         <h1>{currentTrack.exercise}</h1>
-        <strong>{current.displayedReps} repetições</strong>
+        <strong>{current.repsPerSet} repetições</strong>
       </div>
       <div className="timer-clock" role="timer" aria-label={`${remaining} ${remaining === 1 ? "segundo" : "segundos"}`} aria-live={command ? "assertive" : "off"}>
         <strong aria-hidden="true">{clock}</strong>
