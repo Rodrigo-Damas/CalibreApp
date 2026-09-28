@@ -6,7 +6,7 @@ import { Trail } from "./Trail";
 
 afterEach(cleanup);
 beforeEach(() => { localStorage.clear(); Element.prototype.scrollIntoView = vi.fn(); });
-const prescription = (track: "push" | "pull", reps = 10) => ({ track, exerciseKey: track === "push" ? "floor-push-up" as const : "pull-up" as const, suggestedShortReps: reps, chosenShortReps: reps, displayedReps: reps, sets: 5 as const, estimatedVolume: reps * 5 });
+const prescription = (track: "push" | "pull", reps = 10) => ({ track, exerciseKey: track === "push" ? "floor-push-up" as const : "pull-up" as const, repsPerSet: reps, sets: 5 as const, totalVolume: reps * 5 });
 const todaySession: WorkoutSession = { id: "today", combinedId: "today", date: localDateString(), time: "08:30", duration: "short", format: "blocks", arrival: "normal", plannedMinutes: 5, elapsedSeconds: 300, status: "completed", perception: "right", prescriptions: [prescription("push")] };
 const setup = (sessions?: WorkoutSession[]) => { if (sessions) localStorage.setItem("calibre-state-v2", JSON.stringify({ sessions, preferences: {} })); return render(<MockStoreProvider><Trail /></MockStoreProvider>); };
 const userEvent = {
