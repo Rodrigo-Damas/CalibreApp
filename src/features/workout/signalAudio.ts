@@ -18,10 +18,10 @@ export async function playSignal(kind: SignalKind, preferences: SignalPreference
   const oscillator = audio.createOscillator();
   const gain = audio.createGain();
   const at = audio.currentTime + .005;
-  const duration = kind === "prepare" ? .05 : .18;
-  const peak = Math.max(.0001, Math.min(1, preferences.volume) * (kind === "prepare" ? .16 : .32));
-  oscillator.type = "sine";
-  oscillator.frequency.setValueAtTime(kind === "prepare" ? 900 : 1400, at);
+  const duration = kind === "prepare" ? .09 : .22;
+  const peak = Math.max(.0001, Math.min(1, Math.max(0, preferences.volume) * (kind === "prepare" ? .55 : .9)));
+  oscillator.type = kind === "prepare" ? "sine" : "triangle";
+  oscillator.frequency.setValueAtTime(kind === "prepare" ? 950 : 1450, at);
   gain.gain.setValueAtTime(peak, at);
   gain.gain.exponentialRampToValueAtTime(.0001, at + duration);
   oscillator.connect(gain).connect(audio.destination);

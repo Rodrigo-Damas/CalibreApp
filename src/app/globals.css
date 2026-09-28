@@ -81,9 +81,6 @@ h1, h2, h3, h4 { font-weight: 650; }
 .builder-header button:disabled { opacity: 0; pointer-events: none; }
 .builder-header__title { text-align: center; }
 .builder-header__title h1 { margin: 0; font-size: var(--font-size-body); }
-.builder-progress { display: flex; width: min(10rem, 70%); gap: var(--space-1); margin: var(--space-2) auto 0; }
-.builder-progress i { height: 3px; flex: 1; background: var(--color-border-strong); }
-.builder-progress i.is-filled { background: var(--color-accent); }
 .builder-step { width: min(100%, var(--content-max)); min-height: calc(100dvh - var(--header-height)); margin: auto; padding: var(--space-6) var(--space-4) 7rem; }
 .builder-step h2 { margin: 0 0 var(--space-5); font-size: var(--font-size-title); line-height: 1.15; }
 .builder-step > .primary-button { width: 100%; margin-top: var(--space-5); }
@@ -102,6 +99,11 @@ h1, h2, h3, h4 { font-weight: 650; }
 .recovery-note { margin-top: var(--space-4); padding: var(--space-3); border-left: 3px solid var(--color-warning); background: var(--color-surface); color: var(--color-text-secondary); font-size: var(--font-size-label); }
 .build-sheet { padding-top: var(--space-5); }
 .build-sheet > header h2 { margin-bottom: var(--space-4); }
+.track-picker { display: grid; gap: var(--space-3); margin-bottom: var(--space-5); }
+.track-picker h2 { margin-bottom: var(--space-1); }
+.track-picker p:last-child { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-label); }
+.workout-overview { padding-top: var(--space-5); }
+.build-empty { margin: 0; padding-top: var(--space-3); border-top: 1px solid var(--color-border-subtle); color: var(--color-text-secondary); font-size: var(--font-size-label); }
 .build-section { padding: var(--space-4) 0; border-top: 1px solid var(--color-border-subtle); }
 .build-section h3 { margin: 0 0 var(--space-3); font-size: var(--font-size-body); }
 .duration-segmented, .format-segmented { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-1); padding: var(--space-1); border-radius: var(--radius-md); background: var(--color-surface); }
@@ -237,7 +239,7 @@ h1, h2, h3, h4 { font-weight: 650; }
 .connection-lines, .trail-page::before, .trail-page::after, .timeline::before, .timeline::after, .calendar-scroll::before, .calendar-scroll::after { pointer-events: none; }
 
 /* Workout planning hierarchy and confirmation */
-.track-selector button { gap: var(--space-2); min-height: 7rem; border-left: 4px solid var(--track); }
+.track-selector button { gap: var(--space-1) var(--space-2); min-height: 5.5rem; padding: var(--space-3); border-left: 4px solid var(--track); }
 .track-selector button[aria-pressed="true"] { border-color: var(--track); box-shadow: 0 0 0 2px color-mix(in srgb, var(--track) 30%, transparent); }
 .track-selector__hierarchy, .track-selector__exercise { position: relative; z-index: 1; display: flex; flex-direction: column; }
 .track-selector__hierarchy strong { color: var(--track); font-size: var(--font-size-section); }
@@ -277,12 +279,23 @@ h1, h2, h3, h4 { font-weight: 650; }
 .node-status { white-space: nowrap; }
 
 @media (max-width: 420px) {
+  .track-selector { grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+  .track-selector button { min-height: 7.5rem; padding: var(--space-2); }
+  .track-selector .track-illustration { right: 1rem; width: 5rem; }
+  .track-selector__check { min-width: 44px; min-height: 44px; }
+  .track-selector__hierarchy strong { font-size: var(--font-size-body); }
+  .track-selector__exercise { grid-column: 1 / -1; }
   .dose-control { width: 100%; min-width: 0; }
   .build-summary dl { grid-template-columns: 1fr; }
   .build-summary li { align-items: flex-start; flex-direction: column; gap: 0; }
   .build-summary li span { text-align: left; }
   .preworkout-confirm dl { grid-template-columns: 1fr; }
   .preworkout-confirm > div { align-items: stretch; flex-direction: column-reverse; }
+}
+@media (min-width: 700px) {
+  .track-selector { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .track-selector button { min-height: 8rem; }
+  .track-selector__exercise { grid-column: 1 / -1; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .track-slot.has-sessions { padding: var(--space-2); }
