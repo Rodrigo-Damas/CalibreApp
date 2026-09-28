@@ -99,13 +99,13 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
   const currentTrack = tracks.find((track) => track.id === current.track)!;
   const progress = Math.max(0, Math.min(100, (Math.max(0, elapsed) / total) * 100));
 
-  return <section className="workout-timer" aria-label="Cronômetro" data-state={timerState} data-reduced-motion={settings.reducedMotion || undefined}>
+  return <section className="workout-timer" aria-label="Cronômetro" data-state={timerState} data-track={elapsed >= 0 ? currentTrack.id : "preparing"} data-reduced-motion={settings.reducedMotion || undefined} style={{ "--track": currentTrack.color } as React.CSSProperties}>
     <header className="timer-header">
       <button type="button" aria-label="Voltar" onClick={() => setConfirm(true)}><ArrowLeft aria-hidden="true" /></button>
       <strong>Treino em andamento</strong>
     </header>
 
-    <div className="timer-content" style={{ "--track": currentTrack.color } as React.CSSProperties}>
+    <div className="timer-content">
       <div className="timer-exercise">
         <span>{currentTrack.name}</span>
         <h1>{currentTrack.exercise}</h1>

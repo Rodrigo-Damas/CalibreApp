@@ -9,11 +9,48 @@ const signal = vi.mocked(playSignal);
 const enable = vi.mocked(enableSignalAudio);
 const advance = async (milliseconds: number) => act(async () => vi.advanceTimersByTime(milliseconds));
 const start = async () => { fireEvent.click(screen.getByRole("button", { name: "Iniciar" })); await act(async () => {}); };
+const prescription = (track: "push" | "pull"): SessionPrescription => ({ track, exerciseKey: track === "push" ? "floor-push-up" : "pull-up", repsPerSet: 5, sets: 5, totalVolume: 25 });
 
 describe("WorkoutTimer", () => {
   beforeEach(() => { vi.useFakeTimers(); signal.mockClear(); enable.mockClear(); Object.defineProperty(navigator, "vibrate", { configurable: true, value: vi.fn() }); });
   afterEach(() => { cleanup(); vi.useRealTimers(); });
   it("mostra trilha, exercício, repetições, série e preparação", () => { render(<WorkoutTimer exercise="Flexão no solo" reps={12} onFinish={() => {}} />); expect(screen.getByText("Empurrar")).toBeVisible(); expect(screen.getByText("Flexão no solo")).toBeVisible(); expect(screen.getByText("12 repetições")).toBeVisible(); expect(screen.getByText("Série 1 de 5")).toBeVisible(); expect(screen.getByRole("timer", { name: "10 segundos" })).toHaveTextContent("00:10"); });
+  it("mantém o fundo padrão na preparação e expõe Empurrar no primeiro minuto", async () => {
+    render(<WorkoutTimer reps={5} onFinish={() => {}} />);
+    const timer = screen.getByLabelText("Cronômetro");
+    expect(timer).toHaveAttribute("data-track", "preparing");
+    expect(timer).toHaveStyle({ "--track": "var(--track-push)" });
+    await start();
+    await advance(10_000);
+    expect(timer).toHaveAttribute("data-track", "push");
+    expect(screen.getByText("Empurrar")).toBeVisible();
+  });
+  it("alterna Empurrar e Puxar a cada minuto no Circuito", async () => {
+    render(<WorkoutTimer prescriptions={[prescription("push"), prescription("pull")]} format="circuit" onFinish={() => {}} />);
+    await start();
+    await advance(10_000);
+    expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-track", "push");
+    await advance(60_000);
+    expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-track", "pull");
+    expect(screen.getByText("Puxar")).toBeVisible();
+    await advance(60_000);
+    expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-track", "push");
+  });
+  it("troca a cor somente na transição de bloco no formato Blocos", async () => {
+    render(<WorkoutTimer prescriptions={[prescription("push"), prescription("pull")]} format="blocks" onFinish={() => {}} />);
+    await start();
+    await advance(10_000);
+    const timer = screen.getByLabelText("Cronômetro");
+    expect(timer).toHaveAttribute("data-track", "push");
+    await advance(299_900);
+    expect(timer).toHaveAttribute("data-track", "push");
+    await advance(100);
+    expect(timer).toHaveAttribute("data-track", "pull");
+  });
+  it("expõe movimento reduzido no elemento que troca o fundo", () => {
+    render(<WorkoutTimer reps={5} preferences={{ sound: true, volume: .5, vibration: true, reducedMotion: true }} onFinish={() => {}} />);
+    expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-reduced-motion", "true");
+  });
   it("mantém 10 a 6 silenciosos, sinaliza 5 a 2 e comanda no segundo 1", async () => { render(<WorkoutTimer reps={12} onFinish={() => {}} />); await start(); expect(enable).toHaveBeenCalledOnce(); await advance(4_999); expect(signal).not.toHaveBeenCalled(); await advance(1); expect(screen.getByRole("timer", { name: "5 segundos" })).toHaveTextContent("00:05"); expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-state", "attention"); await advance(3_000); expect(signal.mock.calls.filter(([kind]) => kind === "prepare")).toHaveLength(4); await advance(1_000); expect(signal.mock.calls.filter(([kind]) => kind === "command")).toHaveLength(1); expect(screen.getByLabelText("Cronômetro")).toHaveAttribute("data-state", "command"); });
   it("sinaliza antes do minuto e vira o placar sem som adicional", async () => { render(<WorkoutTimer reps={5} onFinish={() => {}} />); await start(); await advance(69_900); expect(signal.mock.calls.filter(([kind]) => kind === "prepare")).toHaveLength(8); expect(signal.mock.calls.filter(([kind]) => kind === "command")).toHaveLength(2); await advance(100); expect(screen.getByText("Série 2 de 5")).toBeVisible(); expect(screen.getByRole("timer", { name: "60 segundos" })).toHaveTextContent("01:00"); expect(signal.mock.calls.filter(([kind]) => kind === "command")).toHaveLength(2); });
   it("não duplica sinais após pausa, retomada ou retorno da aba", async () => { render(<WorkoutTimer reps={5} onFinish={() => {}} />); await start(); await advance(12_000); fireEvent.click(screen.getByRole("button", { name: "Pausar" })); const before = signal.mock.calls.length; await advance(60_000); document.dispatchEvent(new Event("visibilitychange")); expect(signal).toHaveBeenCalledTimes(before); fireEvent.click(screen.getByRole("button", { name: "Continuar" })); await act(async () => {}); await advance(58_000); const atTurn = signal.mock.calls.length; document.dispatchEvent(new Event("visibilitychange")); expect(signal).toHaveBeenCalledTimes(atTurn); expect(signal.mock.calls.filter(([kind]) => kind === "command")).toHaveLength(2); });
