@@ -2,21 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
-import { tracks, localDateString, type DurationChoice, type Perception, type TrackId, type WorkoutFormat, type WorkoutSession } from "@/mocks/data";
+import { tracks, localDateString, type DurationChoice, type TrackId, type WorkoutFormat, type WorkoutSession } from "@/mocks/data";
 import { useMockStore } from "@/mocks/store";
 import { compareCompletedPerformance, makePrescription, repetitionsReference, SETS } from "./recommendationEngine";
 import { TrackSelector } from "./TrackSelector";
 import { WorkoutTimer } from "./EmomTimer";
-import { WorkoutPulse } from "./WorkoutPulse";
 
-type Step = "planning" | "running" | "pulse" | "done";
-type Milestone = { state: "increase" | "personal-record"; text: string };
+type Step = "planning" | "running" | "done";
+type CompletedPerformance = ReturnType<typeof compareCompletedPerformance> & { track: TrackId };
 
 export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose: () => void; initialTrack?: TrackId; initialTracks?: TrackId[] }) {
   const title = useRef<HTMLHeadingElement>(null);
   const startButton = useRef<HTMLButtonElement>(null);
   const confirmButton = useRef<HTMLButtonElement>(null);
   const confirmation = useRef<HTMLElement>(null);
+  const completionButton = useRef<HTMLButtonElement>(null);
+  const completion = useRef<HTMLElement>(null);
   const store = useMockStore();
   const startingTracks = initialTracks ?? (initialTrack ? [initialTrack] : []);
   const [step, setStep] = useState<Step>("planning");
@@ -25,7 +26,7 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
   const [format, setFormat] = useState<WorkoutFormat>("blocks");
   const [chosen, setChosen] = useState<Partial<Record<TrackId, number>>>({});
   const [pending, setPending] = useState<WorkoutSession | null>(null);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [completedPerformance, setCompletedPerformance] = useState<CompletedPerformance[]>([]);
   const [confirming, setConfirming] = useState(false);
   const today = localDateString();
   const repeated = tracks.filter((track) => store.sessions.some((session) => session.date === today && session.prescriptions.some((item) => item.track === track.id))).map((track) => track.id);
@@ -57,6 +58,32 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     document.addEventListener("keydown", escape);
     return () => document.removeEventListener("keydown", escape);
   }, [confirming]);
+  useEffect(() => {
+    if (step !== "done") return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    completionButton.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !completion.current) return;
+      const focusable = [...completion.current.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")];
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!first || !last) return;
+      if ((event.shiftKey && document.activeElement === first) || (!event.shiftKey && document.activeElement === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      window.setTimeout(() => previouslyFocused?.isConnected && previouslyFocused.focus(), 0);
+    };
+  }, [step, onClose]);
 
   function toggle(id: TrackId) { setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]); }
   function changeReps(id: TrackId, delta: number) { setChosen((value) => ({ ...value, [id]: Math.max(1, (value[id] ?? references[id]) + delta) })); }
@@ -73,19 +100,16 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     store.completeSession({ ...pending, status: "interrupted", elapsedSeconds: seconds, prescriptions: pending.prescriptions.map((item) => ({ ...item, totalVolume: 0 })) });
     onClose();
   }
-  function complete(perception: Perception) {
+  function complete() {
     if (!pending) return;
-    const finished = { ...pending, perception, elapsedSeconds: pending.plannedMinutes * 60 } as WorkoutSession;
-    const wins = finished.prescriptions.flatMap<Milestone>((dose) => {
-      const track = tracks.find((item) => item.id === dose.track)!;
-      const result = compareCompletedPerformance(dose.track, dose, store.sessions);
-      if (result.state === "personal-record") return [{ state: result.state, text: `Novo recorde pessoal em ${track.name}: ${track.exercise}: ${result.currentVolume} repetições.` }];
-      if (result.state === "increase") return [{ state: result.state, text: `Volume maior que o último treino em ${track.name}: ${track.exercise}: ${result.currentVolume} repetições.` }];
-      return [];
-    });
+    const finished = { ...pending, elapsedSeconds: pending.plannedMinutes * 60 } as WorkoutSession;
+    const performance = finished.prescriptions.map((dose) => ({
+      track: dose.track,
+      ...compareCompletedPerformance(dose.track, dose, store.sessions),
+    }));
     store.completeSession(finished);
     setPending(finished);
-    setMilestones(wins);
+    setCompletedPerformance(performance);
     setStep("done");
   }
 
@@ -101,10 +125,9 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
         </>}
         <div className="builder-sticky-action"><button ref={startButton} className="primary-button" disabled={!selected.length} onClick={() => setConfirming(true)}>Revisar e começar</button></div>
       </section>}
-      {step === "running" && pending && <WorkoutTimer prescriptions={pending.prescriptions} format={pending.format} preferences={store.preferences} updatePreferences={store.updatePreferences} onFinish={() => setStep("pulse")} onInterrupt={interrupt} />}
-      {step === "pulse" && <WorkoutPulse onConfirm={complete} />}
-      {step === "done" && pending && <section className="builder-step completion-step"><h2>Treino concluído</h2><dl><div><dt>Duração</dt><dd>{pending.plannedMinutes} min</dd></div><div><dt>Trilhas</dt><dd>{pending.prescriptions.map((item) => tracks.find((track) => track.id === item.track)!.name).join(", ")}</dd></div><div><dt>Volume total executado</dt><dd>{pending.prescriptions.reduce((sum, item) => sum + item.totalVolume, 0)} repetições</dd></div></dl>{milestones.length > 0 && <ul className="milestone-list">{milestones.map((milestone) => <li className={`is-${milestone.state}`} key={milestone.text}><strong>{milestone.state === "personal-record" ? "Recorde pessoal" : "Aumento"}</strong>{milestone.text}</li>)}</ul>}<button className="primary-button" onClick={onClose}>Voltar para a agenda</button></section>}
+      {step === "running" && pending && <WorkoutTimer prescriptions={pending.prescriptions} format={pending.format} preferences={store.preferences} updatePreferences={store.updatePreferences} onFinish={complete} onInterrupt={interrupt} />}
     </main>
     {confirming && <div className="preworkout-backdrop"><section ref={confirmation} className="preworkout-confirm" role="dialog" aria-modal="true" aria-labelledby="ready-title"><h2 id="ready-title">Tudo pronto?</h2><dl><div><dt>Duração</dt><dd>{plannedMinutes} minutos</dd></div><div><dt>Exercícios</dt><dd>{prescriptions.length}</dd></div><div><dt>Formato</dt><dd>{formatLabel}</dd></div></dl><div><button onClick={closeConfirmation}>Voltar e ajustar</button><button ref={confirmButton} className="primary-button" onClick={begin}>Iniciar cronômetro</button></div></section></div>}
+    {step === "done" && pending && <div className="preworkout-backdrop"><section ref={completion} className="preworkout-confirm completion-confirm" role="dialog" aria-modal="true" aria-labelledby="completion-title"><h2 id="completion-title">Treino concluído</h2><p className="completion-total"><span>Volume total executado</span><strong>{pending.prescriptions.reduce((sum, item) => sum + item.totalVolume, 0)} repetições</strong></p><ul className="completion-summary">{pending.prescriptions.map((dose) => { const track = tracks.find((item) => item.id === dose.track)!; const result = completedPerformance.find((item) => item.track === dose.track); return <li key={dose.track} style={{ "--track": track.color } as CSSProperties}><span>{track.name}</span><strong>{track.exercise}</strong><small>{dose.sets} séries · {dose.repsPerSet} repetições por série</small><p className={!result || result.delta === undefined ? "is-neutral" : result.delta > 0 ? "is-positive" : result.delta < 0 ? "is-negative" : "is-neutral"}>{result?.delta === undefined ? "Sem treino anterior" : result.delta > 0 ? `+${result.delta}` : result.delta < 0 ? `−${Math.abs(result.delta)}` : "Mesmo volume"}</p>{result?.state === "personal-record" && <em>Recorde pessoal</em>}</li>; })}</ul><div><button ref={completionButton} className="primary-button" onClick={onClose}>Voltar para a agenda</button></div></section></div>}
   </div>;
 }

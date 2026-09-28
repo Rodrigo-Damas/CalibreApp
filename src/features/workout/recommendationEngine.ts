@@ -41,6 +41,7 @@ export type PerformanceComparison = {
   state: PerformanceState;
   currentVolume: number;
   previousVolume?: number;
+  delta?: number;
   historicalBest?: number;
 };
 
@@ -54,10 +55,11 @@ export function compareCompletedPerformance(
   const previousVolume = prior.at(-1)?.totalVolume;
   const historicalBest = prior.length ? Math.max(...prior.map((item) => item.totalVolume)) : undefined;
   const currentVolume = current.totalVolume;
+  const delta = previousVolume === undefined ? undefined : currentVolume - previousVolume;
   const state: PerformanceState = historicalBest !== undefined && currentVolume > historicalBest
     ? "personal-record"
     : previousVolume !== undefined && currentVolume > previousVolume
       ? "increase"
       : "maintenance";
-  return { state, currentVolume, previousVolume, historicalBest };
+  return { state, currentVolume, previousVolume, delta, historicalBest };
 }
