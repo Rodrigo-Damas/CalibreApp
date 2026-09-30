@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { X } from "lucide-react";
-import { tracks, localDateString, type DurationChoice, type TrackId, type WorkoutFormat, type WorkoutSession } from "@/mocks/data";
+import { interruptionReasonLabels, tracks, localDateString, type DurationChoice, type InterruptionReason, type TrackId, type WorkoutFormat, type WorkoutSession } from "@/mocks/data";
 import { useMockStore } from "@/mocks/store";
-import { compareCompletedPerformance, makePrescription, repetitionsReference, SETS } from "./recommendationEngine";
+import { compareCompletedPerformance, makePrescription, repetitionsReference, sequence, SETS } from "./recommendationEngine";
 import { TrackSelector } from "./TrackSelector";
 import { WorkoutTimer } from "./EmomTimer";
 
@@ -95,14 +95,24 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
     setConfirming(false);
     setStep("running");
   }
-  function interrupt(seconds: number) {
+  function interrupt(result: { completedSeries: number; activeOrderIndex: number; activeExercise: string; elapsedSeconds: number; reason: InterruptionReason }) {
     if (!pending) return;
-    store.completeSession({ ...pending, status: "interrupted", elapsedSeconds: seconds, prescriptions: pending.prescriptions.map((item) => ({ ...item, totalVolume: 0 })) });
-    onClose();
+    const completedOrder = sequence(pending.prescriptions, pending.prescriptions[0].sets, pending.format).slice(0, result.completedSeries);
+    const prescriptions = pending.prescriptions.map((item) => {
+      const completedForExercise = completedOrder.filter((entry) => entry.track === item.track).length;
+      const totalVolume = completedForExercise * item.repsPerSet;
+      return { ...item, totalVolume, externalLoadVolume: totalVolume * (item.addedLoadKg ?? 0) };
+    });
+    const plannedSeries = pending.prescriptions.length * pending.prescriptions[0].sets;
+    const interrupted: WorkoutSession = { ...pending, status: "interrupted", elapsedSeconds: result.elapsedSeconds, plannedSeries, completedSeries: result.completedSeries, completionPercentage: result.completedSeries / plannedSeries * 100, activeOrderIndex: result.activeOrderIndex, activeExercise: result.activeExercise, interruptionReason: result.reason, prescriptions };
+    store.completeSession(interrupted);
+    setPending(interrupted);
+    setStep("done");
   }
-  function complete() {
+  function complete(result?: { completedSeries: number; activeOrderIndex: number; activeExercise: string; elapsedSeconds: number }) {
     if (!pending) return;
-    const finished = { ...pending, elapsedSeconds: pending.plannedMinutes * 60 } as WorkoutSession;
+    const plannedSeries = pending.prescriptions.length * pending.prescriptions[0].sets;
+    const finished = { ...pending, elapsedSeconds: result?.elapsedSeconds ?? pending.plannedMinutes * 60, plannedSeries, completedSeries: plannedSeries, completionPercentage: 100, activeOrderIndex: result?.activeOrderIndex, activeExercise: result?.activeExercise } as WorkoutSession;
     const performance = finished.prescriptions.map((dose) => ({
       track: dose.track,
       ...compareCompletedPerformance(dose.track, dose, store.sessions),
@@ -128,6 +138,6 @@ export function WorkoutFlow({ onClose, initialTrack, initialTracks }: { onClose:
       {step === "running" && pending && <WorkoutTimer prescriptions={pending.prescriptions} format={pending.format} preferences={store.preferences} updatePreferences={store.updatePreferences} onFinish={complete} onInterrupt={interrupt} />}
     </main>
     {confirming && <div className="preworkout-backdrop"><section ref={confirmation} className="preworkout-confirm" role="dialog" aria-modal="true" aria-labelledby="ready-title"><h2 id="ready-title">Tudo pronto?</h2><dl><div><dt>Duração</dt><dd>{plannedMinutes} minutos</dd></div><div><dt>Exercícios</dt><dd>{prescriptions.length}</dd></div><div><dt>Formato</dt><dd>{formatLabel}</dd></div></dl><div><button onClick={closeConfirmation}>Voltar e ajustar</button><button ref={confirmButton} className="primary-button" onClick={begin}>Iniciar cronômetro</button></div></section></div>}
-    {step === "done" && pending && <div className="preworkout-backdrop"><section ref={completion} className="preworkout-confirm completion-confirm" role="dialog" aria-modal="true" aria-labelledby="completion-title"><h2 id="completion-title">Treino concluído</h2><p className="completion-total"><span>Volume total executado</span><strong>{pending.prescriptions.reduce((sum, item) => sum + item.totalVolume, 0)} repetições</strong></p><ul className="completion-summary">{pending.prescriptions.map((dose) => { const track = tracks.find((item) => item.id === dose.track)!; const result = completedPerformance.find((item) => item.track === dose.track); return <li key={dose.track} style={{ "--track": track.color } as CSSProperties}><span>{track.name}</span><strong>{track.exercise}</strong><small>{dose.sets} séries · {dose.repsPerSet} repetições por série</small><p className={!result || result.delta === undefined ? "is-neutral" : result.delta > 0 ? "is-positive" : result.delta < 0 ? "is-negative" : "is-neutral"}>{result?.delta === undefined ? "Sem treino anterior" : result.delta > 0 ? `+${result.delta}` : result.delta < 0 ? `−${Math.abs(result.delta)}` : "Mesmo volume"}</p>{result?.state === "personal-record" && <em>Recorde pessoal</em>}</li>; })}</ul><div><button ref={completionButton} className="primary-button" onClick={onClose}>Voltar para a agenda</button></div></section></div>}
+    {step === "done" && pending && <div className="preworkout-backdrop"><section ref={completion} className="preworkout-confirm completion-confirm" role="dialog" aria-modal="true" aria-labelledby="completion-title"><h2 id="completion-title">{pending.status === "interrupted" ? "Treino interrompido" : "Treino concluído"}</h2><p className="completion-total"><span>Volume total</span><strong>{pending.prescriptions.reduce((sum, item) => sum + item.totalVolume, 0)} repetições</strong></p>{pending.prescriptions.some((item) => (item.addedLoadKg ?? 0) > 0) && <p>Carga adicional: +{Math.max(...pending.prescriptions.map((item) => item.addedLoadKg ?? 0))} kg</p>}{pending.status === "interrupted" && <dl><div><dt>Séries realizadas</dt><dd>{pending.completedSeries} de {pending.plannedSeries}</dd></div><div><dt>Percentual concluído</dt><dd>{pending.completionPercentage}%</dd></div><div><dt>Exercício ativo</dt><dd>{pending.activeExercise}</dd></div><div><dt>Motivo</dt><dd>{pending.interruptionReason ? interruptionReasonLabels[pending.interruptionReason] : "Não informado"}</dd></div></dl>}<ul className="completion-summary">{pending.prescriptions.map((dose) => { const track = tracks.find((item) => item.id === dose.track)!; const result = completedPerformance.find((item) => item.track === dose.track); const completedSets = dose.repsPerSet ? dose.totalVolume / dose.repsPerSet : 0; return <li key={dose.track} style={{ "--track": track.color } as CSSProperties}><span>{track.name}</span><strong>{track.exercise}</strong><small>{completedSets} séries · {dose.totalVolume} repetições contabilizadas</small>{pending.status === "completed" && <><p className={!result || result.delta === undefined ? "is-neutral" : result.delta > 0 ? "is-positive" : result.delta < 0 ? "is-negative" : "is-neutral"}>{result?.delta === undefined ? "Sem treino anterior" : result.delta > 0 ? `+${result.delta}` : result.delta < 0 ? `−${Math.abs(result.delta)}` : "Mesmo volume"}</p>{result?.state === "personal-record" && <em>Recorde pessoal</em>}</>}</li>; })}</ul><div><button ref={completionButton} className="primary-button" onClick={onClose}>Voltar para a agenda</button></div></section></div>}
   </div>;
 }

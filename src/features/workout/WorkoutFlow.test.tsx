@@ -118,7 +118,7 @@ describe("WorkoutFlow", () => {
     expect(screen.queryByText("Como foi o treino?")).not.toBeInTheDocument();
     const dialog = screen.getByRole("dialog", { name: "Treino concluído" });
     expect(within(dialog).getByText("70 repetições")).toBeVisible();
-    expect(within(dialog).getByText("5 séries · 14 repetições por série")).toBeVisible();
+    expect(within(dialog).getByText("5 séries · 70 repetições contabilizadas")).toBeVisible();
     expect(within(dialog).getByText("Sem treino anterior")).toBeVisible();
     await waitFor(() => {
       const saved = JSON.parse(localStorage.getItem("calibre-state-v2")!).sessions.at(-1);

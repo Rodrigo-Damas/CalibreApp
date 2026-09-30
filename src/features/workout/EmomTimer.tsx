@@ -1,8 +1,8 @@
 "use client";
 
 import { ArrowLeft, Pause, Play, RotateCcw, Square, Volume2, VolumeX } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { tracks, type SessionPrescription, type WorkoutFormat } from "@/mocks/data";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { interruptionReasonIds, interruptionReasonLabels, tracks, type InterruptionReason, type SessionPrescription, type WorkoutFormat } from "@/mocks/data";
 import { sequence } from "./recommendationEngine";
 import { cancelCountdownSignal, enableSignalAudio, playCountdownSignal, playSignal, type SignalPreferences } from "./signalAudio";
 
@@ -13,20 +13,23 @@ type Props = {
   updatePreferences?: (preferences: Partial<SignalPreferences>) => void;
   exercise?: string;
   reps?: number;
-  onFinish: (elapsed?: number) => void;
-  onInterrupt?: (elapsed: number) => void;
+  onFinish: (result: TimerResult) => void;
+  onInterrupt?: (result: TimerResult & { reason: InterruptionReason }) => void;
 };
+
+export type TimerResult = { completedSeries: number; activeOrderIndex: number; activeExercise: string; elapsedSeconds: number };
 
 const defaultPreferences = { sound: true, volume: .45, vibration: true };
 
 export function WorkoutTimer({ prescriptions, format = "blocks", preferences = defaultPreferences, updatePreferences, reps, onFinish, onInterrupt }: Props) {
-  const doses: SessionPrescription[] = prescriptions?.length ? prescriptions : [{ track: "push", exerciseKey: "floor-push-up", repsPerSet: reps || 1, sets: 5, totalVolume: (reps || 1) * 5 }];
-  const order = sequence(doses, doses[0].sets, format);
+  const doses = useMemo<SessionPrescription[]>(() => prescriptions?.length ? prescriptions : [{ track: "push", exerciseKey: "floor-push-up", repsPerSet: reps || 1, sets: 5, totalVolume: (reps || 1) * 5, addedLoadKg: 0, externalLoadVolume: 0 }], [prescriptions, reps]);
+  const order = useMemo(() => sequence(doses, doses[0].sets, format), [doses, format]);
   const total = order.length * 60;
   const [elapsed, setElapsed] = useState(-10);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [askingReason, setAskingReason] = useState(false);
   const [settings, setSettings] = useState(preferences);
   const started = useRef(0);
   const offset = useRef(0);
@@ -58,14 +61,15 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
         setRunning(false);
         cancelCountdownSignal();
         void playSignal("command", preferencesRef.current);
-        finishRef.current(total);
+        const finalEntry = order.at(-1)!;
+        finishRef.current({ completedSeries: order.length, activeOrderIndex: order.length - 1, activeExercise: tracks.find((track) => track.id === finalEntry.track)!.exercise, elapsedSeconds: total });
       }
     };
     tick();
     const id = window.setInterval(tick, 100);
     document.addEventListener("visibilitychange", tick);
     return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", tick); };
-  }, [running, paused, total]);
+  }, [running, paused, total, order]);
 
   function changePreferences(change: Partial<SignalPreferences>) {
     setSettings((current) => ({ ...current, ...change }));
@@ -97,6 +101,10 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
   const current = order[active];
   const currentTrack = tracks.find((track) => track.id === current.track)!;
   const progress = Math.max(0, Math.min(100, (Math.max(0, elapsed) / total) * 100));
+  function interrupt(reason: InterruptionReason) {
+    const elapsedSeconds = Math.max(0, Math.floor(elapsed));
+    onInterrupt?.({ completedSeries: Math.min(order.length, Math.floor(elapsedSeconds / 60)), activeOrderIndex: active, activeExercise: currentTrack.exercise, elapsedSeconds, reason });
+  }
 
   return <section className="workout-timer" aria-label="Cronômetro" data-state={timerState} data-track={elapsed >= 0 ? currentTrack.id : "preparing"} data-reduced-motion={settings.reducedMotion || undefined} style={{ "--track": currentTrack.color } as React.CSSProperties}>
     <header className="timer-header">
@@ -127,7 +135,8 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
       <button type="button" onClick={() => setConfirm(true)}><Square aria-hidden="true" /><span>Encerrar</span></button>
     </div>
 
-    {confirm && <div className="timer-confirm" role="alertdialog" aria-modal="true" aria-label="Confirmar interrupção"><p>Ao encerrar, o treino ficará marcado como interrompido e nenhum volume será estimado.</p><div><button onClick={() => setConfirm(false)}>Continuar treino</button><button onClick={() => { cancelCountdownSignal(); onInterrupt?.(Math.max(0, Math.floor(elapsed))); }}>Marcar como interrompido</button></div></div>}
+    {confirm && !askingReason && <div className="timer-confirm" role="alertdialog" aria-modal="true" aria-label="Confirmar interrupção"><p>Somente as séries com o intervalo completamente encerrado serão contabilizadas.</p><div><button onClick={() => setConfirm(false)}>Continuar treino</button><button onClick={() => { cancelCountdownSignal(); setAskingReason(true); }}>Marcar como interrompido</button></div></div>}
+    {confirm && askingReason && <div className="timer-confirm" role="dialog" aria-modal="true" aria-labelledby="interruption-question"><p id="interruption-question">Por que o treino terminou antes?</p><div>{interruptionReasonIds.map((reason) => <button key={reason} onClick={() => interrupt(reason)}>{interruptionReasonLabels[reason]}</button>)}</div></div>}
   </section>;
 }
 

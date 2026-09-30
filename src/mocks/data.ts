@@ -5,6 +5,15 @@ export type WorkoutFormat = "blocks" | "circuit";
 export type Arrival = "empty" | "slow" | "normal" | "ready" | "whole";
 export type Perception = "limit" | "heavy" | "right" | "light" | "spare";
 export type SessionStatus = "completed" | "interrupted";
+export const interruptionReasonIds = ["could_not_continue", "pain_or_discomfort", "time_constraint", "external_interruption", "other"] as const;
+export type InterruptionReason = (typeof interruptionReasonIds)[number];
+export const interruptionReasonLabels: Record<InterruptionReason, string> = {
+  could_not_continue: "Não consegui continuar",
+  pain_or_discomfort: "Dor ou desconforto",
+  time_constraint: "Fiquei sem tempo",
+  external_interruption: "Fui interrompido",
+  other: "Outro motivo",
+};
 export type TrackDefinition = { id: TrackId; name: string; color: string; exercise: string; exerciseKey: "floor-push-up" | "pull-up" | "air-squat" | "floor-crunch"; initialShortRecommendation: number };
 export const tracks: TrackDefinition[] = [
   { id: "push", name: "Empurrar", color: "var(--track-push)", exercise: "Flexão no solo", exerciseKey: "floor-push-up", initialShortRecommendation: 14 },
@@ -12,14 +21,14 @@ export const tracks: TrackDefinition[] = [
   { id: "legs", name: "Pernas", color: "var(--track-legs)", exercise: "Agachamento livre", exerciseKey: "air-squat", initialShortRecommendation: 18 },
   { id: "core", name: "Core", color: "var(--track-core)", exercise: "Abdominal no solo", exerciseKey: "floor-crunch", initialShortRecommendation: 10 },
 ];
-export type SessionPrescription = { track: TrackId; exerciseKey: TrackDefinition["exerciseKey"]; repsPerSet: number; sets: 5 | 10; totalVolume: number };
-export type WorkoutSession = { id: string; combinedId: string; date: string; time: string; duration: DurationChoice; format: WorkoutFormat; arrival: Arrival; plannedMinutes: number; elapsedSeconds: number; status: SessionStatus; perception?: Perception; prescriptions: SessionPrescription[] };
+export type SessionPrescription = { track: TrackId; exerciseKey: TrackDefinition["exerciseKey"]; repsPerSet: number; sets: 5 | 10; totalVolume: number; addedLoadKg?: number; externalLoadVolume?: number };
+export type WorkoutSession = { id: string; combinedId: string; date: string; time: string; duration: DurationChoice; format: WorkoutFormat; arrival: Arrival; plannedMinutes: number; elapsedSeconds: number; status: SessionStatus; perception?: Perception; plannedSeries?: number; completedSeries?: number; completionPercentage?: number; activeOrderIndex?: number; activeExercise?: string; interruptionReason?: InterruptionReason; prescriptions: SessionPrescription[] };
 export function localDateString(value = new Date()) { const y = value.getFullYear(), m = String(value.getMonth() + 1).padStart(2, "0"), d = String(value.getDate()).padStart(2, "0"); return `${y}-${m}-${d}`; }
 export function addLocalDays(date: string, amount: number) { const [y, m, d] = date.split("-").map(Number), value = new Date(y, m - 1, d, 12); value.setDate(value.getDate() + amount); return localDateString(value); }
 /** A historical calendar ending in today; future days are never rendered. */
 export function createTimelineDates(today = localDateString(), historyDays = 42) { return Array.from({ length: historyDays + 1 }, (_, index) => addLocalDays(today, index - historyDays)); }
 export const timelineDates = createTimelineDates();
-const demo = (id: string, offset: number, track: TrackId, reps: number, perception: Perception = "right"): WorkoutSession => { const definition = tracks.find((item) => item.id === track)!; return { id, combinedId: id, date: addLocalDays(localDateString(), offset), time: "07:10", duration: "short", format: "blocks", arrival: "normal", plannedMinutes: 5, elapsedSeconds: 300, status: "completed", perception, prescriptions: [{ track, exerciseKey: definition.exerciseKey, repsPerSet: reps, sets: 5, totalVolume: reps * 5 }] }; };
+const demo = (id: string, offset: number, track: TrackId, reps: number, perception: Perception = "right"): WorkoutSession => { const definition = tracks.find((item) => item.id === track)!; return { id, combinedId: id, date: addLocalDays(localDateString(), offset), time: "07:10", duration: "short", format: "blocks", arrival: "normal", plannedMinutes: 5, elapsedSeconds: 300, status: "completed", perception, plannedSeries: 5, completedSeries: 5, completionPercentage: 100, prescriptions: [{ track, exerciseKey: definition.exerciseKey, repsPerSet: reps, sets: 5, totalVolume: reps * 5, addedLoadKg: 0, externalLoadVolume: 0 }] }; };
 export const demoSessions: WorkoutSession[] = [demo("s1", -28, "push", 11), demo("s2", -25, "legs", 16, "heavy"), demo("s3", -22, "pull", 6), demo("s4", -19, "core", 9, "light"), demo("s5", -15, "push", 13), demo("s6", -11, "legs", 18), demo("s7", -8, "pull", 7), demo("s8", -5, "core", 10), demo("s9", -2, "push", 14)];
 export type SessionEvent = WorkoutSession;
 export const timelineEvents = demoSessions;

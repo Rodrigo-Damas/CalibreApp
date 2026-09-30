@@ -7,9 +7,10 @@ import { WorkoutNode } from "./WorkoutNode";
 
 const formatter = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
 
-export function TimelineRow({ date, sessions, onSelect }: {
+export function TimelineRow({ date, sessions, history, onSelect }: {
   date: string;
   sessions: WorkoutSession[];
+  history: WorkoutSession[];
   onSelect: (session: WorkoutSession) => void;
 }) {
   const [expanded, setExpanded] = useState<TrackId | null>(null);
@@ -28,7 +29,7 @@ export function TimelineRow({ date, sessions, onSelect }: {
       const list = sessions.filter((session) => session.prescriptions.some((item) => item.track === track.id)).sort((a, b) => a.time.localeCompare(b.time));
       const visible = expanded === track.id ? list : list.slice(0, 2);
       return <div className={`track-slot${list.length ? " has-sessions" : ""}`} role="cell" key={track.id} aria-label={`${track.name}: ${list.length} sessões`}>
-        <div className="node-group">{visible.map((session) => <WorkoutNode key={`${session.id}-${track.id}`} session={session} prescription={session.prescriptions.find((item) => item.track === track.id)!} onSelect={onSelect} />)}</div>
+        <div className="node-group">{visible.map((session) => { const prescription = session.prescriptions.find((item) => item.track === track.id)!; const earlier = history.filter((item) => item.status === "completed" && item.id !== session.id && `${item.date} ${item.time}` < `${session.date} ${session.time}`).map((item) => item.prescriptions.find((dose) => dose.track === track.id)?.totalVolume).filter((volume): volume is number => volume !== undefined); const record = session.status === "completed" && earlier.length > 0 && prescription.totalVolume > Math.max(...earlier); return <WorkoutNode key={`${session.id}-${track.id}`} session={session} prescription={prescription} record={record} onSelect={onSelect} />; })}</div>
         {list.length > 2 && <button className="expand-nodes" onClick={() => setExpanded(expanded === track.id ? null : track.id)} aria-expanded={expanded === track.id}>{expanded === track.id ? "Recolher" : `+${list.length - 2}`}</button>}
       </div>;
     })}
