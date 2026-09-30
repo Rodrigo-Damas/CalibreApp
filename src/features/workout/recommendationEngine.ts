@@ -25,9 +25,11 @@ export function makePrescription(
   exerciseKey: SessionPrescription["exerciseKey"],
   repsPerSet: number,
   duration: DurationChoice,
+  addedLoadKg = 0,
 ): SessionPrescription {
   const sets = SETS[duration];
-  return { track, exerciseKey, repsPerSet, sets, totalVolume: repsPerSet * sets };
+  const totalVolume = repsPerSet * sets;
+  return { track, exerciseKey, repsPerSet, sets, totalVolume, addedLoadKg, externalLoadVolume: totalVolume * addedLoadKg };
 }
 
 export function sequence<T extends { track: TrackId }>(items: T[], sets: number, format: "blocks" | "circuit") {

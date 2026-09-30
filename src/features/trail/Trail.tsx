@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
+  interruptionReasonLabels,
   createTimelineDates,
   localDateString,
   tracks,
@@ -27,6 +28,7 @@ const weekStart = (date: string) => {
 function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: () => void }) {
   const dialog = useRef<HTMLElement>(null);
   const volume = session.prescriptions.reduce((total, item) => total + (item.totalVolume || 0), 0);
+  const addedLoad = Math.max(0, ...session.prescriptions.map((item) => item.addedLoadKg ?? 0));
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -59,10 +61,12 @@ function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: 
         <h2 id="session-title">{session.prescriptions.length > 1 ? "Sessão combinada" : "Sessão individual"}</h2>
         <dl>
           <div><dt>Tempo em atividade</dt><dd>{Math.floor(session.elapsedSeconds / 60)} min {session.elapsedSeconds % 60}s</dd></div>
-          <div><dt>Volume total executado</dt><dd>{session.status === "interrupted" ? "Não concluído" : volume}</dd></div>
+          <div><dt>Volume total</dt><dd>{volume} repetições</dd></div>
+          {addedLoad > 0 && <div><dt>Carga adicional</dt><dd>+{addedLoad} kg</dd></div>}
+          {session.status === "interrupted" && <><div><dt>Séries realizadas</dt><dd>{session.completedSeries === undefined ? "Percentual indisponível" : `${session.completedSeries} de ${session.plannedSeries}`}</dd></div>{session.completionPercentage !== undefined && <div><dt>Percentual concluído</dt><dd>{session.completionPercentage}%</dd></div>}{session.activeExercise && <div><dt>Exercício ativo</dt><dd>{session.activeExercise}</dd></div>}{session.interruptionReason && <div><dt>Motivo</dt><dd>{interruptionReasonLabels[session.interruptionReason]}</dd></div>}</>}
           {session.prescriptions.map((prescription) => {
             const track = tracks.find((item) => item.id === prescription.track)!;
-            return <div key={prescription.track}><dt>{track.name}</dt><dd>{session.status === "interrupted" ? "Interrompido" : `${prescription.sets} séries · ${prescription.repsPerSet} por série · ${prescription.totalVolume} executadas`}</dd></div>;
+            return <div key={prescription.track}><dt>{track.name}</dt><dd>{`${prescription.totalVolume} repetições contabilizadas`}</dd></div>;
           })}
         </dl>
       </section>
@@ -130,7 +134,7 @@ export function Trail() {
             <h2 className="month-separator" id={`month-${month.key}`}>{month.label}</h2>
             {month.weeks.map((week) => <section className="week-group" role="rowgroup" aria-labelledby={`week-${month.key}-${week.key}`} key={`${month.key}-${week.key}`}>
               <h3 className="week-separator" id={`week-${month.key}-${week.key}`}>{week.label}</h3>
-              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} onSelect={setSelected} />)}
+              {week.dates.map((date) => <TimelineRow key={date} date={date} sessions={store.sessions.filter((session) => session.date === date)} history={store.sessions} onSelect={setSelected} />)}
             </section>)}
           </section>)}
         </div>

@@ -1,21 +1,23 @@
 # Especificação de interface
 
-## Jornada
+## Jornada e montagem
 
-Quatro colunas fixas: Empurrar, Puxar, Pernas e Core. O histórico fica acima e hoje é sempre a última linha; não existem nós futuros. Sessões concluídas, combinadas e interrompidas abrem resumo com tempo, quantidade de sessões e volume estimado total e por trilha.
+A agenda mantém quatro trilhas fixas — Empurrar, Puxar, Pernas e Core — e termina em hoje. A montagem define uma ou mais trilhas, 5 ou 10 séries por exercício, formato em blocos ou circuito e repetições por série. Cada prescrição também possui `addedLoadKg`, sempre entendido como carga externa adicional e nunca como peso corporal.
 
-## Montagem
+O resumo principal apresenta o volume total exclusivamente em repetições. Se `addedLoadKg` for maior que zero, apresenta também **Carga adicional: +N kg**; carga zero e volume em quilogramas ficam ocultos.
 
-Ordem obrigatória: trilhas → condição da sessão → Curto/Longo → Blocos/Circuito (somente com múltiplas trilhas) → revisão editável → execução. Curto corresponde a 5 minutos por trilha. Longo corresponde a 10 minutos por trilha e usa metade da recomendação curta, arredondada para cima. Combinações mantêm prescrições independentes.
+## Execução e interrupção
 
-A condição tem cinco posições e altera apenas a sugestão da sessão. Ajustes manuais nunca são bloqueados. Um salto acima de 20%, calculado com arredondamento convencional, recebe confirmação conversacional; uma redução acima de 20% recebe observação leve.
+O cronômetro tem preparação de 10 segundos e cada entrada da sequência dura um minuto. Uma série só é contabilizada depois que seu intervalo termina completamente: interromper durante a nona de dez séries registra 8 de 10 e 80%. Não se pergunta quantas repetições foram feitas na série em curso.
 
-## Execução e Pulso
+Ao encerrar antecipadamente, a interface pergunta **“Por que o treino terminou antes?”**. Os textos “Não consegui continuar”, “Dor ou desconforto”, “Fiquei sem tempo”, “Fui interrompido” e “Outro motivo” são mapeados, respectivamente, aos identificadores estáveis `could_not_continue`, `pain_or_discomfort`, `time_constraint`, `external_interruption` e `other`.
 
-Há contagem regressiva de 10 segundos, comandos na virada, quatro sinais preparatórios e encerramento próprio. Não há interação entre séries. Pausa é secundária; interrupção registra o tempo e não estima volume.
+O resumo da interrupção contém séries completas sobre planejadas, percentual, repetições contabilizadas, exercício ativo, carga adicional quando existir e motivo. A distribuição das séries completas segue a mesma `sequence` usada pelo cronômetro, tanto em blocos quanto em circuito.
 
-Pulso é uma linha contínua acessível com: No limite, Pesado, Na medida, Leve e Sobrou. Começa visualmente no centro sem registrar escolha. O histórico real explica a próxima recomendação.
+## Volume, histórico e progressão
 
-## Persistência e repetição
+`totalVolume` representa repetições contabilizadas. Internamente, `externalLoadVolume = completedRepetitions * addedLoadKg` é o **volume de carga externa**, reservado para detalhes ou evolução futura. Peso corporal nunca entra nesse cálculo.
 
-Várias sessões podem ocorrer no mesmo dia, inclusive repetindo as quatro trilhas. A montagem comunica recuperação sem bloquear. Histórico, recordes e preferências de som, volume, vibração e movimento ficam salvos localmente.
+Não existe avaliação pós-treino nem regra baseada em RIR. Percepções antigas continuam legíveis apenas para compatibilidade. Recordes e referências de progressão usam somente comparações objetivas entre sessões integralmente concluídas; interrupções permanecem no histórico, mas nunca geram recorde ou referência.
+
+Sessões antigas interrompidas sem contagem suficiente continuam mostrando o tempo e **Percentual indisponível**, sem percentual inferido.

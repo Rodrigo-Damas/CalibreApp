@@ -1,12 +1,14 @@
 # Calibre
 
-Aplicação local de treino de calistenia organizada em quatro trilhas permanentes: **Empurrar** (Flexão no solo), **Puxar** (Barra fixa), **Pernas** (Agachamento livre) e **Core** (Abdominal no solo).
+Aplicação local de treino de calistenia organizada em quatro trilhas permanentes: **Empurrar**, **Puxar**, **Pernas** e **Core**.
 
 ## Fluxo
 
-A jornada é uma timeline vertical que termina em hoje, sem dias futuros. O CTA **Treinar** abre a seleção de uma a quatro trilhas, condição pré-sessão, duração, formato quando aplicável e revisão editável. Curto usa 5 séries; Longo usa 10 e `ceil(recomendação curta / 2)` repetições por série. Volume é sempre identificado como **estimado**.
+A agenda vertical termina em hoje e aceita várias sessões no mesmo dia. A montagem combina trilhas, 5 ou 10 séries, blocos ou circuito e repetições por série. O cronômetro contabiliza apenas séries cujo minuto terminou completamente.
 
-Sessões múltiplas no mesmo dia e prescrições independentes em Blocos ou Circuito são suportadas. A execução tem contagem inicial, sinais automáticos e nenhuma confirmação entre séries. O encerramento Pulso registra uma entre cinco percepções; interrupções guardam tempo, mas não presumem volume.
+Ao interromper, o usuário escolhe um motivo e recebe um resumo com séries completas sobre planejadas, percentual, repetições contabilizadas e exercício ativo. Não há pergunta de repetições parciais nem avaliação pós-treino. Sessões interrompidas aparecem no histórico, porém não geram recordes nem referências de progressão. Registros antigos sem contagem de séries exibem o tempo e “Percentual indisponível”.
+
+Volume total é sempre exibido em **repetições**. `addedLoadKg` representa somente carga externa adicional: zero fica oculto e valores positivos aparecem como **Carga adicional: +N kg**. O produto `externalLoadVolume = completedRepetitions * addedLoadKg` é armazenado internamente como “volume de carga externa”; o peso corporal nunca é multiplicado.
 
 ## Desenvolvimento
 
@@ -17,4 +19,4 @@ npm run lint
 npm run build
 ```
 
-Histórico e preferências são persistidos defensivamente no armazenamento local. A recomendação pura fica em `src/features/workout/recommendationEngine.ts`.
+Histórico e preferências são persistidos defensivamente no armazenamento local. Identificadores de motivos e textos de interface são desacoplados em `src/mocks/data.ts`, e a recomendação pura fica em `src/features/workout/recommendationEngine.ts`.
