@@ -5,7 +5,7 @@ import { MockStoreProvider } from "@/mocks/store";
 import { WorkoutFlow } from "./WorkoutFlow";
 
 vi.mock("./EmomTimer", () => ({
-  WorkoutTimer: ({ onFinish }: { onFinish: () => void }) => <section aria-label="Cronômetro"><button onClick={onFinish}>Terminar cronômetro</button></section>,
+  WorkoutTimer: ({ prescriptions, onFinish, onInterrupt }: { prescriptions: WorkoutSession["prescriptions"]; onFinish: () => void; onInterrupt: (result: { completedSeries: number; activeOrderIndex: number; activeExercise: string; elapsedSeconds: number; reason: "time_constraint" }) => void }) => <section aria-label="Cronômetro">{prescriptions.map((item) => <span key={item.track}>{item.track}: {item.addedLoadKg} kg</span>)}<button onClick={onFinish}>Terminar cronômetro</button><button onClick={() => onInterrupt({ completedSeries: 1, activeOrderIndex: 1, activeExercise: "Barra fixa", elapsedSeconds: 75, reason: "time_constraint" })}>Interromper cronômetro</button></section>,
 }));
 
 afterEach(cleanup);
@@ -80,6 +80,55 @@ describe("WorkoutFlow", () => {
     fireEvent.click(trackButton("Core"));
     expect(screen.getByText("Nenhuma trilha selecionada")).toBeVisible();
     expect(screen.getByRole("button", { name: "Revisar e começar" })).toBeDisabled();
+  });
+
+  it("controla carga individual a partir de zero, respeita o mínimo e limpa ao remover", () => {
+    setup({ initialTracks: ["push", "pull"] });
+    expect(screen.getAllByLabelText("Sem carga")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Diminuir carga adicional de Empurrar" }));
+    expect(screen.getAllByLabelText("Sem carga")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }));
+    expect(screen.getByLabelText("2 kg de carga adicional")).toHaveTextContent("+2 kg");
+    expect(screen.getByRole("button", { name: "Aumentar carga adicional de Puxar" }).parentElement).toHaveTextContent("Sem carga");
+    fireEvent.click(screen.getByRole("button", { name: "Diminuir carga adicional de Empurrar" }));
+    expect(screen.getByLabelText("1 kg de carga adicional")).toBeVisible();
+    fireEvent.click(trackButton("Empurrar"));
+    fireEvent.click(trackButton("Empurrar"));
+    expect(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }).parentElement).toHaveTextContent("Sem carga");
+  });
+
+  it("persiste carga e volume externo sem alterar repetições, e mostra somente cargas positivas", async () => {
+    seed([]);
+    setup({ initialTracks: ["push", "pull"] });
+    fireEvent.click(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Revisar e começar" }));
+    const confirmation = screen.getByRole("dialog", { name: "Tudo pronto?" });
+    expect(within(confirmation).getByText("14 repetições · +2 kg")).toBeVisible();
+    expect(within(confirmation).getByText("7 repetições")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar cronômetro" }));
+    expect(screen.getByText("push: 2 kg")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Terminar cronômetro" }));
+    const result = screen.getByRole("dialog", { name: "Treino concluído" });
+    expect(within(result).getByText(/70 repetições contabilizadas · \+2 kg/)).toBeVisible();
+    expect(within(result).getByText("5 séries · 35 repetições contabilizadas")).toBeVisible();
+    await waitFor(() => {
+      const [push, pull] = JSON.parse(localStorage.getItem("calibre-state-v2")!).sessions.at(-1).prescriptions;
+      expect(push).toMatchObject({ addedLoadKg: 2, totalVolume: 70, externalLoadVolume: 140 });
+      expect(pull).toMatchObject({ addedLoadKg: 0, totalVolume: 35, externalLoadVolume: 0 });
+    });
+  });
+
+  it("calcula volume externo interrompido apenas com séries concluídas", async () => {
+    seed([]);
+    setup({ initialTrack: "push" });
+    fireEvent.click(screen.getByRole("button", { name: "Aumentar carga adicional de Empurrar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Revisar e começar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Iniciar cronômetro" }));
+    fireEvent.click(screen.getByRole("button", { name: "Interromper cronômetro" }));
+    expect(screen.getByText("1 séries · 14 repetições contabilizadas · +1 kg")).toBeVisible();
+    await waitFor(() => expect(JSON.parse(localStorage.getItem("calibre-state-v2")!).sessions.at(-1).prescriptions[0]).toMatchObject({ totalVolume: 14, addedLoadKg: 1, externalLoadVolume: 14 }));
   });
 
   it("mantém o aviso de trilha já realizada hoje", () => {

@@ -28,7 +28,6 @@ const weekStart = (date: string) => {
 function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: () => void }) {
   const dialog = useRef<HTMLElement>(null);
   const volume = session.prescriptions.reduce((total, item) => total + (item.totalVolume || 0), 0);
-  const addedLoad = Math.max(0, ...session.prescriptions.map((item) => item.addedLoadKg ?? 0));
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -62,11 +61,10 @@ function SessionSheet({ session, onClose }: { session: WorkoutSession; onClose: 
         <dl>
           <div><dt>Tempo em atividade</dt><dd>{Math.floor(session.elapsedSeconds / 60)} min {session.elapsedSeconds % 60}s</dd></div>
           <div><dt>Volume total</dt><dd>{volume} repetições</dd></div>
-          {addedLoad > 0 && <div><dt>Carga adicional</dt><dd>+{addedLoad} kg</dd></div>}
           {session.status === "interrupted" && <><div><dt>Séries realizadas</dt><dd>{session.completedSeries === undefined ? "Percentual indisponível" : `${session.completedSeries} de ${session.plannedSeries}`}</dd></div>{session.completionPercentage !== undefined && <div><dt>Percentual concluído</dt><dd>{session.completionPercentage}%</dd></div>}{session.activeExercise && <div><dt>Exercício ativo</dt><dd>{session.activeExercise}</dd></div>}{session.interruptionReason && <div><dt>Motivo</dt><dd>{interruptionReasonLabels[session.interruptionReason]}</dd></div>}</>}
           {session.prescriptions.map((prescription) => {
             const track = tracks.find((item) => item.id === prescription.track)!;
-            return <div key={prescription.track}><dt>{track.name}</dt><dd>{`${prescription.totalVolume} repetições contabilizadas`}</dd></div>;
+            return <div key={prescription.track}><dt>{track.name} · {track.exercise}</dt><dd>{prescription.totalVolume} repetições contabilizadas{(prescription.addedLoadKg ?? 0) > 0 ? ` · +${prescription.addedLoadKg} kg` : ""}</dd></div>;
           })}
         </dl>
       </section>

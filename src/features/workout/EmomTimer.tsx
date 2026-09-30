@@ -117,6 +117,7 @@ export function WorkoutTimer({ prescriptions, format = "blocks", preferences = d
         <span>{currentTrack.name}</span>
         <h1>{currentTrack.exercise}</h1>
         <strong>{current.repsPerSet} repetições</strong>
+        {(current.addedLoadKg ?? 0) > 0 && <small className="timer-load">+{current.addedLoadKg} kg de carga adicional</small>}
       </div>
       <div className="timer-clock" role="timer" aria-label={`${remaining} ${remaining === 1 ? "segundo" : "segundos"}`} aria-live={command ? "assertive" : "off"}>
         <strong aria-hidden="true">{clock}</strong>

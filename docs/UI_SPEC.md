@@ -2,9 +2,9 @@
 
 ## Jornada e montagem
 
-A agenda mantém quatro trilhas fixas — Empurrar, Puxar, Pernas e Core — e termina em hoje. A montagem define uma ou mais trilhas, 5 ou 10 séries por exercício, formato em blocos ou circuito e repetições por série. Cada prescrição também possui `addedLoadKg`, sempre entendido como carga externa adicional e nunca como peso corporal.
+A agenda mantém quatro trilhas fixas — Empurrar, Puxar, Pernas e Core — e termina em hoje. A montagem define uma ou mais trilhas, 5 ou 10 séries por exercício, formato em blocos ou circuito e repetições por série. Cada prescrição também possui `addedLoadKg`, sempre entendido como carga externa adicional e nunca como peso corporal. A carga é individual por exercício, começa em zero, não aceita valores negativos e muda em incrementos de 1 kg, independentemente das repetições e da progressão. Remover e selecionar novamente uma trilha restaura repetições e carga aos valores padrão.
 
-O resumo principal apresenta o volume total exclusivamente em repetições. Se `addedLoadKg` for maior que zero, apresenta também **Carga adicional: +N kg**; carga zero e volume em quilogramas ficam ocultos.
+O resumo principal apresenta o volume total exclusivamente em repetições. A carga de cada exercício acompanha toda a jornada — montagem, confirmação, execução, conclusão ou interrupção e histórico — no formato **+N kg**, somente quando positiva. Carga zero e volume em quilogramas ficam ocultos nos resumos.
 
 ## Execução e interrupção
 
