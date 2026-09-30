@@ -17,6 +17,14 @@ describe("WorkoutTimer", () => {
   beforeEach(() => { vi.useFakeTimers(); signal.mockClear(); countdown.mockClear(); cancelCountdown.mockClear(); enable.mockClear(); Object.defineProperty(navigator, "vibrate", { configurable: true, value: vi.fn() }); });
   afterEach(() => { cleanup(); vi.useRealTimers(); });
   it("mostra trilha, exercício, repetições, série e preparação", () => { render(<WorkoutTimer exercise="Flexão no solo" reps={12} onFinish={() => {}} />); expect(screen.getByText("Empurrar")).toBeVisible(); expect(screen.getByText("Flexão no solo")).toBeVisible(); expect(screen.getByText("12 repetições")).toBeVisible(); expect(screen.getByText("Série 1 de 5")).toBeVisible(); expect(screen.getByRole("timer", { name: "10 segundos" })).toHaveTextContent("00:10"); });
+  it("mostra a carga do exercício ativo e omite carga zero", async () => {
+    render(<WorkoutTimer prescriptions={[{ ...prescription("push"), addedLoadKg: 3 }, { ...prescription("pull"), addedLoadKg: 0 }]} format="circuit" onFinish={() => {}} />);
+    expect(screen.getByText("+3 kg de carga adicional")).toBeVisible();
+    await start();
+    await advance(70_000);
+    expect(screen.getByText("Puxar")).toBeVisible();
+    expect(screen.queryByText(/kg de carga adicional/)).not.toBeInTheDocument();
+  });
   it("mantém o fundo padrão na preparação e expõe Empurrar no primeiro minuto", async () => {
     render(<WorkoutTimer reps={5} onFinish={() => {}} />);
     const timer = screen.getByLabelText("Cronômetro");

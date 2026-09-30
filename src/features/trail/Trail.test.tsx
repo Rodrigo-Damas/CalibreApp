@@ -28,4 +28,19 @@ describe("Trail", () => {
   it("mantém o marcador de hoje e permite iniciar outra sessão", () => { setup([todaySession]); const row = document.querySelector<HTMLElement>(`[data-date="${localDateString()}"]`)!; expect(within(row).getByRole("button", { name: /Empurrar, às 08:30, 5 séries, 10 repetições por série, 50 repetições de volume/ })).toBeVisible(); fireEvent.click(screen.getByRole("button", { name: /Montar treino/ })); expect(screen.getByText("Escolha as trilhas")).toBeVisible(); expect(screen.getByText("Treino feito hoje")).toBeVisible(); });
   it("oculta o botão durante resumo e montagem", () => { setup([todaySession]); fireEvent.click(screen.getByRole("button", { name: /Empurrar, às 08:30/ })); expect(screen.queryByRole("button", { name: /Montar treino/ })).not.toBeInTheDocument(); fireEvent.click(screen.getByRole("button", { name: "Fechar resumo" })); fireEvent.click(screen.getByRole("button", { name: /Montar treino/ })); expect(screen.queryByRole("button", { name: /Montar treino/ })).not.toBeInTheDocument(); });
   it("abre a montagem depois de fechar um resumo", async () => { setup([todaySession]); await userEvent.click(screen.getByRole("button", { name: /Empurrar, às 08:30/ })); await userEvent.click(screen.getByRole("button", { name: "Fechar resumo" })); await userEvent.click(screen.getByRole("button", { name: "Montar treino" })); expect(screen.getByRole("dialog", { name: "Montar treino" })).toBeVisible(); });
+  it("mostra cargas diferentes junto a cada exercício e omite carga zero ou ausente", () => {
+    setup([{ ...todaySession, prescriptions: [{ ...prescription("push"), addedLoadKg: 2, externalLoadVolume: 100 }, { ...prescription("pull"), addedLoadKg: 5, externalLoadVolume: 250 }] }]);
+    fireEvent.click(screen.getByRole("button", { name: /Empurrar, às 08:30/ }));
+    const dialog = screen.getByRole("dialog", { name: "Sessão combinada" });
+    expect(within(dialog).getByText("50 repetições contabilizadas · +2 kg")).toBeVisible();
+    expect(within(dialog).getByText("50 repetições contabilizadas · +5 kg")).toBeVisible();
+    expect(within(dialog).queryByText("Carga adicional")).not.toBeInTheDocument();
+  });
+
+  it("mantém compatibilidade com sessão antiga sem carga", () => {
+    setup([todaySession]);
+    fireEvent.click(screen.getByRole("button", { name: /Empurrar, às 08:30/ }));
+    expect(screen.getByText("50 repetições contabilizadas")).toBeVisible();
+    expect(screen.queryByText(/\+\d+ kg/)).not.toBeInTheDocument();
+  });
 });
